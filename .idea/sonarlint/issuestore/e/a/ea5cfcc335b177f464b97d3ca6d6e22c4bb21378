@@ -1,0 +1,41 @@
+
+b
+java:S1192"FDefine a constant instead of duplicating this literal "GROUP" 4 times.(æÜÄúÿÿÿÿ
+]
+java:S1192ˆ"FDefine a constant instead of duplicating this literal "%s-%s" 3 times.(Ñéıä
+D
+java:S5411„"(Use a primitive boolean expression here.(“û´ üÿÿÿÿ
+D
+java:S5411è"(Use a primitive boolean expression here.(â ´Íùÿÿÿÿ
+D
+java:S5411ô"(Use a primitive boolean expression here.(â ´Íùÿÿÿÿ
+?
+java:S5411¯"(Use a primitive boolean expression here.(Ãáÿ•
+X
+java:S4973Ú"<Strings and Boxed types should be compared using "equals()".(Òœ¢½ûÿÿÿÿ
+X
+java:S1612Ï"BReplace this lambda with method reference 'RuntimeException::new'.(Ç¾©R
+]
+java:S1126š"AReplace this if-then-else statement by a single return statement.(Üµºûşÿÿÿÿ
+Q
+java:S1854ÿ"5Remove this useless assignment to local variable "x".(ƒÑëØşÿÿÿÿ
+V
+java:S1854ş":Remove this useless assignment to local variable "result".(£„Ù¬üÿÿÿÿ
+R	java:S125ı"<This block of commented-out lines of code should be removed.(¤ª ·
+G
+java:S1481ş"+Remove this unused "result" local variable.(£„Ù¬üÿÿÿÿ
+B
+java:S1481ÿ"&Remove this unused "x" local variable.(ƒÑëØşÿÿÿÿ
+R	java:S125¡"<This block of commented-out lines of code should be removed.(õ¬
+O
+java:S1854È"8Remove this useless assignment to local variable "diff".(µ¼áâ
+O
+java:S1172Á"3Remove this unused method parameter "lastSessions".(ğÀ¶ƒşÿÿÿÿ
+D
+java:S1172Ş"-Remove this unused method parameter "quizId".(æßËß
+S
+java:S1854¿	"<Remove this useless assignment to local variable "response".(¯ç£œ
+D
+java:S1481¿	"-Remove this unused "response" local variable.(¯ç£œ
+N
+java:S1144ö"8Remove this unused private "getSessionResultDto" method.(«‡

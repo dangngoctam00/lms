@@ -1,0 +1,12 @@
+version: '2'
+services:
+  fakesmtp:
+    image: gessnerfl/fake-smtp-server:latest
+    container_name: fakesmtp
+    hostname: fakesmtp
+    environment:
+      FAKESMTP_PORT: "1025"
+    ports:
+      - "8090:8080"
+      - "8091:8081"
+      - "1025:1025"

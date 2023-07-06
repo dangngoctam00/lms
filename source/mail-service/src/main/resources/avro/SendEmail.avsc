@@ -1,0 +1,33 @@
+{
+  "namespace": "lms.mailservice.dto",
+  "type": "record",
+  "name": "SendEmail",
+  "fields": [
+    {
+      "name": "from",
+      "type": "Person"
+    },
+    {
+      "name": "to",
+      "type": {
+        "type": "array",
+        "items": "Person"
+      }
+    },
+    {
+      "name": "subject",
+      "type": "string"
+    },
+    {
+      "name": "content",
+      "type": "string"
+    },
+    {
+      "name": "attachments",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    }
+  ]
+}
