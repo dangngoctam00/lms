@@ -1,0 +1,61 @@
+-- INSERT INTO quiz_session (id, quiz_id, started_at, submitted_at, user_id)
+-- VALUES ('238721a7-b6f4-4af6-8f8d-e5399c3f8079', 1, '2022-05-01 21:53:46.584008', '2022-05-01 21:57:55.121859', 2);
+--
+--
+-- INSERT INTO quiz_session_result (id, score, graded_state, final_verdict)
+-- VALUES ('238721a7-b6f4-4af6-8f8d-e5399c3f8079', 2, 'WAITING', null);
+--
+-- INSERT INTO quiz_answer_question_temporary (id, session_id, question_id, optional_student_note, attempts)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 1,
+--         'Thầy ơi mạng em bị lag nên câu này em submit nhầm, thầy cho em đi lại', 1);
+-- INSERT INTO quiz_answer_question_temporary (id, session_id, question_id, optional_student_note, attempts)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 2,
+--         'Thầy ơi mạng em bị lag nên câu này em submit nhầm, thầy cho em đi lại', 2);
+-- INSERT INTO quiz_answer_question_temporary (id, session_id, question_id, optional_student_note, attempts)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 3,
+--         'Thầy ơi mạng em bị lag nên câu này em submit nhầm, thầy cho em đi lại', 3);
+-- INSERT INTO quiz_answer_question_temporary (id, session_id, question_id, optional_student_note, attempts)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 4,
+--         'Thầy ơi mạng em bị lag nên câu này em submit nhầm, thầy cho em đi lại', 2);
+-- INSERT INTO quiz_answer_question_temporary (id, session_id, question_id, optional_student_note, attempts)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 5, 'câu hỏi này bủh quá', 1);
+-- INSERT INTO quiz_answer_question_temporary (id, session_id, question_id, optional_student_note, attempts)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 6,
+--         'Thầy ơi mạng em bị lag nên câu này em submit nhầm, thầy cho em đi lại', 2);
+--
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, 'Câu trả lời cho câu hỏi tự luận, dù chỉ có một nơi nhập nhưng dùng mảng cho nó giống DTO :)', null, 1,
+--         5);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '2', true, 1, 1);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, 'is', true, 1, 2);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '2', false, 1, 3);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '1', false, 1, 4);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '1', false, 1, 6);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, 'alwayss', false, 2, 2);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '3', false, 2, 4);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '1', false, 2, 3);
+-- INSERT INTO quiz_answer_temporary (id, value, is_correct, sort_order, answer_question_id)
+-- VALUES (default, '2', false, 3, 3);
+--
+--
+--
+-- INSERT INTO quiz_session_result_question (id, session_result_id, question_id, answer_id, earned_point)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 1, 1, 2);
+-- INSERT INTO quiz_session_result_question (id, session_result_id, question_id, answer_id, earned_point)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 6, 6, 0);
+-- INSERT INTO quiz_session_result_question (id, session_result_id, question_id, answer_id, earned_point)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 5, 5, null);
+-- INSERT INTO quiz_session_result_question (id, session_result_id, question_id, answer_id, earned_point)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 4, 4, 0);
+-- INSERT INTO quiz_session_result_question (id, session_result_id, question_id, answer_id, earned_point)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 2, 2, 0);
+-- INSERT INTO quiz_session_result_question (id, session_result_id, question_id, answer_id, earned_point)
+-- VALUES (default, '238721a7-b6f4-4af6-8f8d-e5399c3f8079', 3, 3, 0);
