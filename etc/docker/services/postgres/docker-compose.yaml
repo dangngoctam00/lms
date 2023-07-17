@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:10
+    container_name: lms
+    restart: always
+    volumes:
+      - lms-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_DB: lms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: lms
+    ports:
+      - "5432:5432"
+volumes:
+  lms-data:
+    name: lms-data

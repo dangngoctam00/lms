@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+    amq:
+      image: vromero/activemq-artemis:latest-alpine
+      container_name: activemq
+      restart: always
+      volumes:
+        - artemis:/var/lib/artemis/etc-override
+      environment:
+        ARTEMIS_USERNAME: lms
+        ARTEMIS_PASSWORD: lms
+        ARTEMIS_MIN_MEMORY: "1512M"
+        ARTEMIS_MAX_MEMORY: "2000M"
+        MAX_DISK_USAGE: "100"
+        ENABLE_JMX_EXPORTER: "true"
+      ports:
+        - "8161:8161"
+        - "61616:61616"
+volumes:
+  artemis:
+    name: artemis

@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$/source/common-lib/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/source/lms-backend/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/source/lms-backend/target/generated-sources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/source/lms-quiz/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/source/mail-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/source/mail-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/source/mail-service/target/generated" charset="UTF-8" />
