@@ -8,6 +8,8 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/dataSources/
+.idea/sonarlint/
 *.iws
 *.iml
 *.ipr
@@ -36,3 +38,4 @@ build/
 
 ### Mac OS ###
 .DS_Store
+/.idea/sonarlint/
