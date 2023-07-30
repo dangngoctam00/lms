@@ -14,6 +14,12 @@ type Tx struct {
 	config
 	// Exam is the client for interacting with the Exam builders.
 	Exam *ExamClient
+	// ExamHistory is the client for interacting with the ExamHistory builders.
+	ExamHistory *ExamHistoryClient
+	// Question is the client for interacting with the Question builders.
+	Question *QuestionClient
+	// QuestionHistory is the client for interacting with the QuestionHistory builders.
+	QuestionHistory *QuestionHistoryClient
 
 	// lazily loaded.
 	client     *Client
@@ -146,6 +152,9 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Exam = NewExamClient(tx.config)
+	tx.ExamHistory = NewExamHistoryClient(tx.config)
+	tx.Question = NewQuestionClient(tx.config)
+	tx.QuestionHistory = NewQuestionHistoryClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

@@ -74,6 +74,16 @@ func IsPublished(v bool) predicate.Exam {
 	return predicate.Exam(sql.FieldEQ(FieldIsPublished, v))
 }
 
+// HavingDraft applies equality check predicate on the "havingDraft" field. It's identical to HavingDraftEQ.
+func HavingDraft(v bool) predicate.Exam {
+	return predicate.Exam(sql.FieldEQ(FieldHavingDraft, v))
+}
+
+// LastPublishedAt applies equality check predicate on the "lastPublishedAt" field. It's identical to LastPublishedAtEQ.
+func LastPublishedAt(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldEQ(FieldLastPublishedAt, v))
+}
+
 // UpdatedAt applies equality check predicate on the "updatedAt" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Exam {
 	return predicate.Exam(sql.FieldEQ(FieldUpdatedAt, v))
@@ -284,6 +294,66 @@ func IsPublishedNEQ(v bool) predicate.Exam {
 	return predicate.Exam(sql.FieldNEQ(FieldIsPublished, v))
 }
 
+// HavingDraftEQ applies the EQ predicate on the "havingDraft" field.
+func HavingDraftEQ(v bool) predicate.Exam {
+	return predicate.Exam(sql.FieldEQ(FieldHavingDraft, v))
+}
+
+// HavingDraftNEQ applies the NEQ predicate on the "havingDraft" field.
+func HavingDraftNEQ(v bool) predicate.Exam {
+	return predicate.Exam(sql.FieldNEQ(FieldHavingDraft, v))
+}
+
+// LastPublishedAtEQ applies the EQ predicate on the "lastPublishedAt" field.
+func LastPublishedAtEQ(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldEQ(FieldLastPublishedAt, v))
+}
+
+// LastPublishedAtNEQ applies the NEQ predicate on the "lastPublishedAt" field.
+func LastPublishedAtNEQ(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldNEQ(FieldLastPublishedAt, v))
+}
+
+// LastPublishedAtIn applies the In predicate on the "lastPublishedAt" field.
+func LastPublishedAtIn(vs ...time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldIn(FieldLastPublishedAt, vs...))
+}
+
+// LastPublishedAtNotIn applies the NotIn predicate on the "lastPublishedAt" field.
+func LastPublishedAtNotIn(vs ...time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldNotIn(FieldLastPublishedAt, vs...))
+}
+
+// LastPublishedAtGT applies the GT predicate on the "lastPublishedAt" field.
+func LastPublishedAtGT(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldGT(FieldLastPublishedAt, v))
+}
+
+// LastPublishedAtGTE applies the GTE predicate on the "lastPublishedAt" field.
+func LastPublishedAtGTE(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldGTE(FieldLastPublishedAt, v))
+}
+
+// LastPublishedAtLT applies the LT predicate on the "lastPublishedAt" field.
+func LastPublishedAtLT(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldLT(FieldLastPublishedAt, v))
+}
+
+// LastPublishedAtLTE applies the LTE predicate on the "lastPublishedAt" field.
+func LastPublishedAtLTE(v time.Time) predicate.Exam {
+	return predicate.Exam(sql.FieldLTE(FieldLastPublishedAt, v))
+}
+
+// LastPublishedAtIsNil applies the IsNil predicate on the "lastPublishedAt" field.
+func LastPublishedAtIsNil() predicate.Exam {
+	return predicate.Exam(sql.FieldIsNull(FieldLastPublishedAt))
+}
+
+// LastPublishedAtNotNil applies the NotNil predicate on the "lastPublishedAt" field.
+func LastPublishedAtNotNil() predicate.Exam {
+	return predicate.Exam(sql.FieldNotNull(FieldLastPublishedAt))
+}
+
 // UpdatedAtEQ applies the EQ predicate on the "updatedAt" field.
 func UpdatedAtEQ(v time.Time) predicate.Exam {
 	return predicate.Exam(sql.FieldEQ(FieldUpdatedAt, v))
@@ -326,32 +396,15 @@ func UpdatedAtLTE(v time.Time) predicate.Exam {
 
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Exam) predicate.Exam {
-	return predicate.Exam(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for _, p := range predicates {
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Exam(sql.AndPredicates(predicates...))
 }
 
 // Or groups predicates with the OR operator between them.
 func Or(predicates ...predicate.Exam) predicate.Exam {
-	return predicate.Exam(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for i, p := range predicates {
-			if i > 0 {
-				s1.Or()
-			}
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Exam(sql.OrPredicates(predicates...))
 }
 
 // Not applies the not operator on the given predicate.
 func Not(p predicate.Exam) predicate.Exam {
-	return predicate.Exam(func(s *sql.Selector) {
-		p(s.Not())
-	})
+	return predicate.Exam(sql.NotPredicates(p))
 }

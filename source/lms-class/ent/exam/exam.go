@@ -19,6 +19,10 @@ const (
 	FieldContextId = "context_id"
 	// FieldIsPublished holds the string denoting the ispublished field in the database.
 	FieldIsPublished = "is_published"
+	// FieldHavingDraft holds the string denoting the havingdraft field in the database.
+	FieldHavingDraft = "having_draft"
+	// FieldLastPublishedAt holds the string denoting the lastpublishedat field in the database.
+	FieldLastPublishedAt = "last_published_at"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
 	FieldUpdatedAt = "updated_at"
 	// Table holds the table name of the exam in the database.
@@ -32,6 +36,8 @@ var Columns = []string{
 	FieldContext,
 	FieldContextId,
 	FieldIsPublished,
+	FieldHavingDraft,
+	FieldLastPublishedAt,
 	FieldUpdatedAt,
 }
 
@@ -71,6 +77,16 @@ func ByContextId(opts ...sql.OrderTermOption) OrderOption {
 // ByIsPublished orders the results by the isPublished field.
 func ByIsPublished(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsPublished, opts...).ToFunc()
+}
+
+// ByHavingDraft orders the results by the havingDraft field.
+func ByHavingDraft(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHavingDraft, opts...).ToFunc()
+}
+
+// ByLastPublishedAt orders the results by the lastPublishedAt field.
+func ByLastPublishedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastPublishedAt, opts...).ToFunc()
 }
 
 // ByUpdatedAt orders the results by the updatedAt field.

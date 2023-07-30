@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"os/signal"
@@ -38,6 +39,16 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 // StartServer func for starting a simple server.
 func StartServer(a *fiber.App) {
 	// Run server.
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Println("Error while reading env, stop application")
+		return
+	}
+	err = InitDatabaseExtensions()
+	if err != nil {
+		log.Fatal("Error while connect to database: ", err)
+		return
+	}
 	if err := a.Listen(os.Getenv("SERVER_URL")); err != nil {
 		log.Printf("Oops... Server is not running! Reason: %v", err)
 	}

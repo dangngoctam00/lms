@@ -25,6 +25,10 @@ type Exam struct {
 	ContextId string `json:"contextId,omitempty"`
 	// IsPublished holds the value of the "isPublished" field.
 	IsPublished bool `json:"isPublished,omitempty"`
+	// HavingDraft holds the value of the "havingDraft" field.
+	HavingDraft bool `json:"havingDraft,omitempty"`
+	// LastPublishedAt holds the value of the "lastPublishedAt" field.
+	LastPublishedAt *time.Time `json:"lastPublishedAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
 	UpdatedAt    time.Time `json:"updatedAt,omitempty"`
 	selectValues sql.SelectValues
@@ -35,13 +39,13 @@ func (*Exam) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case exam.FieldIsPublished:
+		case exam.FieldIsPublished, exam.FieldHavingDraft:
 			values[i] = new(sql.NullBool)
 		case exam.FieldID:
 			values[i] = new(sql.NullInt64)
 		case exam.FieldTitle, exam.FieldContext, exam.FieldContextId:
 			values[i] = new(sql.NullString)
-		case exam.FieldUpdatedAt:
+		case exam.FieldLastPublishedAt, exam.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -87,6 +91,19 @@ func (e *Exam) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field isPublished", values[i])
 			} else if value.Valid {
 				e.IsPublished = value.Bool
+			}
+		case exam.FieldHavingDraft:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field havingDraft", values[i])
+			} else if value.Valid {
+				e.HavingDraft = value.Bool
+			}
+		case exam.FieldLastPublishedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field lastPublishedAt", values[i])
+			} else if value.Valid {
+				e.LastPublishedAt = new(time.Time)
+				*e.LastPublishedAt = value.Time
 			}
 		case exam.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -141,6 +158,14 @@ func (e *Exam) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("isPublished=")
 	builder.WriteString(fmt.Sprintf("%v", e.IsPublished))
+	builder.WriteString(", ")
+	builder.WriteString("havingDraft=")
+	builder.WriteString(fmt.Sprintf("%v", e.HavingDraft))
+	builder.WriteString(", ")
+	if v := e.LastPublishedAt; v != nil {
+		builder.WriteString("lastPublishedAt=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("updatedAt=")
 	builder.WriteString(e.UpdatedAt.Format(time.ANSIC))

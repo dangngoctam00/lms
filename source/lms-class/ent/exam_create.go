@@ -44,6 +44,26 @@ func (ec *ExamCreate) SetIsPublished(b bool) *ExamCreate {
 	return ec
 }
 
+// SetHavingDraft sets the "havingDraft" field.
+func (ec *ExamCreate) SetHavingDraft(b bool) *ExamCreate {
+	ec.mutation.SetHavingDraft(b)
+	return ec
+}
+
+// SetLastPublishedAt sets the "lastPublishedAt" field.
+func (ec *ExamCreate) SetLastPublishedAt(t time.Time) *ExamCreate {
+	ec.mutation.SetLastPublishedAt(t)
+	return ec
+}
+
+// SetNillableLastPublishedAt sets the "lastPublishedAt" field if the given value is not nil.
+func (ec *ExamCreate) SetNillableLastPublishedAt(t *time.Time) *ExamCreate {
+	if t != nil {
+		ec.SetLastPublishedAt(*t)
+	}
+	return ec
+}
+
 // SetUpdatedAt sets the "updatedAt" field.
 func (ec *ExamCreate) SetUpdatedAt(t time.Time) *ExamCreate {
 	ec.mutation.SetUpdatedAt(t)
@@ -96,6 +116,9 @@ func (ec *ExamCreate) check() error {
 	if _, ok := ec.mutation.IsPublished(); !ok {
 		return &ValidationError{Name: "isPublished", err: errors.New(`ent: missing required field "Exam.isPublished"`)}
 	}
+	if _, ok := ec.mutation.HavingDraft(); !ok {
+		return &ValidationError{Name: "havingDraft", err: errors.New(`ent: missing required field "Exam.havingDraft"`)}
+	}
 	if _, ok := ec.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "Exam.updatedAt"`)}
 	}
@@ -140,6 +163,14 @@ func (ec *ExamCreate) createSpec() (*Exam, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.IsPublished(); ok {
 		_spec.SetField(exam.FieldIsPublished, field.TypeBool, value)
 		_node.IsPublished = value
+	}
+	if value, ok := ec.mutation.HavingDraft(); ok {
+		_spec.SetField(exam.FieldHavingDraft, field.TypeBool, value)
+		_node.HavingDraft = value
+	}
+	if value, ok := ec.mutation.LastPublishedAt(); ok {
+		_spec.SetField(exam.FieldLastPublishedAt, field.TypeTime, value)
+		_node.LastPublishedAt = &value
 	}
 	if value, ok := ec.mutation.UpdatedAt(); ok {
 		_spec.SetField(exam.FieldUpdatedAt, field.TypeTime, value)

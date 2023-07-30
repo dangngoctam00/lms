@@ -20,6 +20,42 @@ func (f ExamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExamMutation", m)
 }
 
+// The ExamHistoryFunc type is an adapter to allow the use of ordinary
+// function as ExamHistory mutator.
+type ExamHistoryFunc func(context.Context, *ent.ExamHistoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ExamHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ExamHistoryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExamHistoryMutation", m)
+}
+
+// The QuestionFunc type is an adapter to allow the use of ordinary
+// function as Question mutator.
+type QuestionFunc func(context.Context, *ent.QuestionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f QuestionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.QuestionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.QuestionMutation", m)
+}
+
+// The QuestionHistoryFunc type is an adapter to allow the use of ordinary
+// function as QuestionHistory mutator.
+type QuestionHistoryFunc func(context.Context, *ent.QuestionHistoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f QuestionHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.QuestionHistoryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.QuestionHistoryMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

@@ -7,6 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"lms-class/ent/exam"
+	"lms-class/ent/examhistory"
+	"lms-class/ent/question"
+	"lms-class/ent/questionhistory"
 	"reflect"
 	"sync"
 
@@ -73,7 +76,10 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			exam.Table: exam.ValidColumn,
+			exam.Table:            exam.ValidColumn,
+			examhistory.Table:     examhistory.ValidColumn,
+			question.Table:        question.ValidColumn,
+			questionhistory.Table: questionhistory.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

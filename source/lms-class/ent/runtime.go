@@ -2,8 +2,27 @@
 
 package ent
 
+import (
+	"lms-class/ent/examhistory"
+	"lms-class/ent/questionhistory"
+	"lms-class/ent/schema"
+	"time"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	examhistoryFields := schema.ExamHistory{}.Fields()
+	_ = examhistoryFields
+	// examhistoryDescHistoryTime is the schema descriptor for history_time field.
+	examhistoryDescHistoryTime := examhistoryFields[0].Descriptor()
+	// examhistory.DefaultHistoryTime holds the default value on creation for the history_time field.
+	examhistory.DefaultHistoryTime = examhistoryDescHistoryTime.Default.(func() time.Time)
+	questionhistoryFields := schema.QuestionHistory{}.Fields()
+	_ = questionhistoryFields
+	// questionhistoryDescHistoryTime is the schema descriptor for history_time field.
+	questionhistoryDescHistoryTime := questionhistoryFields[0].Descriptor()
+	// questionhistory.DefaultHistoryTime holds the default value on creation for the history_time field.
+	questionhistory.DefaultHistoryTime = questionhistoryDescHistoryTime.Default.(func() time.Time)
 }

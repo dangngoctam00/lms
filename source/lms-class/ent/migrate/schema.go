@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -15,6 +16,8 @@ var (
 		{Name: "context", Type: field.TypeString},
 		{Name: "context_id", Type: field.TypeString},
 		{Name: "is_published", Type: field.TypeBool},
+		{Name: "having_draft", Type: field.TypeBool},
+		{Name: "last_published_at", Type: field.TypeTime, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// ExamsTable holds the schema information for the "exams" table.
@@ -23,11 +26,77 @@ var (
 		Columns:    ExamsColumns,
 		PrimaryKey: []*schema.Column{ExamsColumns[0]},
 	}
+	// ExamHistoryColumns holds the columns for the "exam_history" table.
+	ExamHistoryColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "history_time", Type: field.TypeTime},
+		{Name: "operation", Type: field.TypeEnum, Enums: []string{"INSERT", "UPDATE", "DELETE"}},
+		{Name: "ref", Type: field.TypeInt, Nullable: true},
+		{Name: "updated_by", Type: field.TypeInt, Nullable: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "context", Type: field.TypeString},
+		{Name: "context_id", Type: field.TypeString},
+		{Name: "is_published", Type: field.TypeBool},
+		{Name: "having_draft", Type: field.TypeBool},
+		{Name: "last_published_at", Type: field.TypeTime, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// ExamHistoryTable holds the schema information for the "exam_history" table.
+	ExamHistoryTable = &schema.Table{
+		Name:       "exam_history",
+		Columns:    ExamHistoryColumns,
+		PrimaryKey: []*schema.Column{ExamHistoryColumns[0]},
+	}
+	// QuestionsColumns holds the columns for the "questions" table.
+	QuestionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "context", Type: field.TypeString},
+		{Name: "context_id", Type: field.TypeInt},
+		{Name: "position", Type: field.TypeInt},
+		{Name: "question_type", Type: field.TypeString},
+		{Name: "data", Type: field.TypeJSON},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// QuestionsTable holds the schema information for the "questions" table.
+	QuestionsTable = &schema.Table{
+		Name:       "questions",
+		Columns:    QuestionsColumns,
+		PrimaryKey: []*schema.Column{QuestionsColumns[0]},
+	}
+	// QuestionHistoryColumns holds the columns for the "question_history" table.
+	QuestionHistoryColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "history_time", Type: field.TypeTime},
+		{Name: "operation", Type: field.TypeEnum, Enums: []string{"INSERT", "UPDATE", "DELETE"}},
+		{Name: "ref", Type: field.TypeInt, Nullable: true},
+		{Name: "updated_by", Type: field.TypeInt, Nullable: true},
+		{Name: "context", Type: field.TypeString},
+		{Name: "context_id", Type: field.TypeInt},
+		{Name: "position", Type: field.TypeInt},
+		{Name: "question_type", Type: field.TypeString},
+		{Name: "data", Type: field.TypeJSON},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// QuestionHistoryTable holds the schema information for the "question_history" table.
+	QuestionHistoryTable = &schema.Table{
+		Name:       "question_history",
+		Columns:    QuestionHistoryColumns,
+		PrimaryKey: []*schema.Column{QuestionHistoryColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ExamsTable,
+		ExamHistoryTable,
+		QuestionsTable,
+		QuestionHistoryTable,
 	}
 )
 
 func init() {
+	ExamHistoryTable.Annotation = &entsql.Annotation{
+		Table: "exam_history",
+	}
+	QuestionHistoryTable.Annotation = &entsql.Annotation{
+		Table: "question_history",
+	}
 }

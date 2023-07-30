@@ -52,6 +52,32 @@ func (eu *ExamUpdate) SetIsPublished(b bool) *ExamUpdate {
 	return eu
 }
 
+// SetHavingDraft sets the "havingDraft" field.
+func (eu *ExamUpdate) SetHavingDraft(b bool) *ExamUpdate {
+	eu.mutation.SetHavingDraft(b)
+	return eu
+}
+
+// SetLastPublishedAt sets the "lastPublishedAt" field.
+func (eu *ExamUpdate) SetLastPublishedAt(t time.Time) *ExamUpdate {
+	eu.mutation.SetLastPublishedAt(t)
+	return eu
+}
+
+// SetNillableLastPublishedAt sets the "lastPublishedAt" field if the given value is not nil.
+func (eu *ExamUpdate) SetNillableLastPublishedAt(t *time.Time) *ExamUpdate {
+	if t != nil {
+		eu.SetLastPublishedAt(*t)
+	}
+	return eu
+}
+
+// ClearLastPublishedAt clears the value of the "lastPublishedAt" field.
+func (eu *ExamUpdate) ClearLastPublishedAt() *ExamUpdate {
+	eu.mutation.ClearLastPublishedAt()
+	return eu
+}
+
 // SetUpdatedAt sets the "updatedAt" field.
 func (eu *ExamUpdate) SetUpdatedAt(t time.Time) *ExamUpdate {
 	eu.mutation.SetUpdatedAt(t)
@@ -111,6 +137,15 @@ func (eu *ExamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := eu.mutation.IsPublished(); ok {
 		_spec.SetField(exam.FieldIsPublished, field.TypeBool, value)
 	}
+	if value, ok := eu.mutation.HavingDraft(); ok {
+		_spec.SetField(exam.FieldHavingDraft, field.TypeBool, value)
+	}
+	if value, ok := eu.mutation.LastPublishedAt(); ok {
+		_spec.SetField(exam.FieldLastPublishedAt, field.TypeTime, value)
+	}
+	if eu.mutation.LastPublishedAtCleared() {
+		_spec.ClearField(exam.FieldLastPublishedAt, field.TypeTime)
+	}
 	if value, ok := eu.mutation.UpdatedAt(); ok {
 		_spec.SetField(exam.FieldUpdatedAt, field.TypeTime, value)
 	}
@@ -155,6 +190,32 @@ func (euo *ExamUpdateOne) SetContextId(s string) *ExamUpdateOne {
 // SetIsPublished sets the "isPublished" field.
 func (euo *ExamUpdateOne) SetIsPublished(b bool) *ExamUpdateOne {
 	euo.mutation.SetIsPublished(b)
+	return euo
+}
+
+// SetHavingDraft sets the "havingDraft" field.
+func (euo *ExamUpdateOne) SetHavingDraft(b bool) *ExamUpdateOne {
+	euo.mutation.SetHavingDraft(b)
+	return euo
+}
+
+// SetLastPublishedAt sets the "lastPublishedAt" field.
+func (euo *ExamUpdateOne) SetLastPublishedAt(t time.Time) *ExamUpdateOne {
+	euo.mutation.SetLastPublishedAt(t)
+	return euo
+}
+
+// SetNillableLastPublishedAt sets the "lastPublishedAt" field if the given value is not nil.
+func (euo *ExamUpdateOne) SetNillableLastPublishedAt(t *time.Time) *ExamUpdateOne {
+	if t != nil {
+		euo.SetLastPublishedAt(*t)
+	}
+	return euo
+}
+
+// ClearLastPublishedAt clears the value of the "lastPublishedAt" field.
+func (euo *ExamUpdateOne) ClearLastPublishedAt() *ExamUpdateOne {
+	euo.mutation.ClearLastPublishedAt()
 	return euo
 }
 
@@ -246,6 +307,15 @@ func (euo *ExamUpdateOne) sqlSave(ctx context.Context) (_node *Exam, err error) 
 	}
 	if value, ok := euo.mutation.IsPublished(); ok {
 		_spec.SetField(exam.FieldIsPublished, field.TypeBool, value)
+	}
+	if value, ok := euo.mutation.HavingDraft(); ok {
+		_spec.SetField(exam.FieldHavingDraft, field.TypeBool, value)
+	}
+	if value, ok := euo.mutation.LastPublishedAt(); ok {
+		_spec.SetField(exam.FieldLastPublishedAt, field.TypeTime, value)
+	}
+	if euo.mutation.LastPublishedAtCleared() {
+		_spec.ClearField(exam.FieldLastPublishedAt, field.TypeTime)
 	}
 	if value, ok := euo.mutation.UpdatedAt(); ok {
 		_spec.SetField(exam.FieldUpdatedAt, field.TypeTime, value)
