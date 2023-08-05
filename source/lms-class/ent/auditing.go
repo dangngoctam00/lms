@@ -113,6 +113,9 @@ func (qh *QuestionHistory) changes(new *QuestionHistory) []Change {
 	if !reflect.DeepEqual(qh.UpdatedAt, new.UpdatedAt) {
 		changes = append(changes, NewChange(questionhistory.FieldUpdatedAt, qh.UpdatedAt, new.UpdatedAt))
 	}
+	if !reflect.DeepEqual(qh.Version, new.Version) {
+		changes = append(changes, NewChange(questionhistory.FieldVersion, qh.Version, new.Version))
+	}
 	return changes
 }
 

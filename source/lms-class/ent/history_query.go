@@ -129,5 +129,6 @@ func (qh *QuestionHistory) Restore(ctx context.Context) (*Question, error) {
 		SetQuestionType(qh.QuestionType).
 		SetData(qh.Data).
 		SetUpdatedAt(qh.UpdatedAt).
+		SetVersion(qh.Version).
 		Save(ctx)
 }

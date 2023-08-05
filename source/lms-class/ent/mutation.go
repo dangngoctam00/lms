@@ -1719,6 +1719,8 @@ type QuestionMutation struct {
 	data          *json.RawMessage
 	appenddata    json.RawMessage
 	updatedAt     *time.Time
+	version       *int64
+	addversion    *int64
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*Question, error)
@@ -2094,6 +2096,62 @@ func (m *QuestionMutation) ResetUpdatedAt() {
 	m.updatedAt = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *QuestionMutation) SetVersion(i int64) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *QuestionMutation) Version() (r int64, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Question entity.
+// If the Question object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuestionMutation) OldVersion(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *QuestionMutation) AddVersion(i int64) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *QuestionMutation) AddedVersion() (r int64, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *QuestionMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // Where appends a list predicates to the QuestionMutation builder.
 func (m *QuestionMutation) Where(ps ...predicate.Question) {
 	m.predicates = append(m.predicates, ps...)
@@ -2128,7 +2186,7 @@ func (m *QuestionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *QuestionMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.context != nil {
 		fields = append(fields, question.FieldContext)
 	}
@@ -2146,6 +2204,9 @@ func (m *QuestionMutation) Fields() []string {
 	}
 	if m.updatedAt != nil {
 		fields = append(fields, question.FieldUpdatedAt)
+	}
+	if m.version != nil {
+		fields = append(fields, question.FieldVersion)
 	}
 	return fields
 }
@@ -2167,6 +2228,8 @@ func (m *QuestionMutation) Field(name string) (ent.Value, bool) {
 		return m.Data()
 	case question.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case question.FieldVersion:
+		return m.Version()
 	}
 	return nil, false
 }
@@ -2188,6 +2251,8 @@ func (m *QuestionMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldData(ctx)
 	case question.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case question.FieldVersion:
+		return m.OldVersion(ctx)
 	}
 	return nil, fmt.Errorf("unknown Question field %s", name)
 }
@@ -2239,6 +2304,13 @@ func (m *QuestionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case question.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Question field %s", name)
 }
@@ -2253,6 +2325,9 @@ func (m *QuestionMutation) AddedFields() []string {
 	if m.addposition != nil {
 		fields = append(fields, question.FieldPosition)
 	}
+	if m.addversion != nil {
+		fields = append(fields, question.FieldVersion)
+	}
 	return fields
 }
 
@@ -2265,6 +2340,8 @@ func (m *QuestionMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedContextId()
 	case question.FieldPosition:
 		return m.AddedPosition()
+	case question.FieldVersion:
+		return m.AddedVersion()
 	}
 	return nil, false
 }
@@ -2287,6 +2364,13 @@ func (m *QuestionMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPosition(v)
+		return nil
+	case question.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Question numeric field %s", name)
@@ -2332,6 +2416,9 @@ func (m *QuestionMutation) ResetField(name string) error {
 		return nil
 	case question.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case question.FieldVersion:
+		m.ResetVersion()
 		return nil
 	}
 	return fmt.Errorf("unknown Question field %s", name)
@@ -2406,6 +2493,8 @@ type QuestionHistoryMutation struct {
 	data          *json.RawMessage
 	appenddata    json.RawMessage
 	updatedAt     *time.Time
+	version       *int64
+	addversion    *int64
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*QuestionHistory, error)
@@ -2993,6 +3082,62 @@ func (m *QuestionHistoryMutation) ResetUpdatedAt() {
 	m.updatedAt = nil
 }
 
+// SetVersion sets the "version" field.
+func (m *QuestionHistoryMutation) SetVersion(i int64) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *QuestionHistoryMutation) Version() (r int64, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the QuestionHistory entity.
+// If the QuestionHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuestionHistoryMutation) OldVersion(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *QuestionHistoryMutation) AddVersion(i int64) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *QuestionHistoryMutation) AddedVersion() (r int64, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *QuestionHistoryMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
 // Where appends a list predicates to the QuestionHistoryMutation builder.
 func (m *QuestionHistoryMutation) Where(ps ...predicate.QuestionHistory) {
 	m.predicates = append(m.predicates, ps...)
@@ -3027,7 +3172,7 @@ func (m *QuestionHistoryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *QuestionHistoryMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.history_time != nil {
 		fields = append(fields, questionhistory.FieldHistoryTime)
 	}
@@ -3058,6 +3203,9 @@ func (m *QuestionHistoryMutation) Fields() []string {
 	if m.updatedAt != nil {
 		fields = append(fields, questionhistory.FieldUpdatedAt)
 	}
+	if m.version != nil {
+		fields = append(fields, questionhistory.FieldVersion)
+	}
 	return fields
 }
 
@@ -3086,6 +3234,8 @@ func (m *QuestionHistoryMutation) Field(name string) (ent.Value, bool) {
 		return m.Data()
 	case questionhistory.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case questionhistory.FieldVersion:
+		return m.Version()
 	}
 	return nil, false
 }
@@ -3115,6 +3265,8 @@ func (m *QuestionHistoryMutation) OldField(ctx context.Context, name string) (en
 		return m.OldData(ctx)
 	case questionhistory.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case questionhistory.FieldVersion:
+		return m.OldVersion(ctx)
 	}
 	return nil, fmt.Errorf("unknown QuestionHistory field %s", name)
 }
@@ -3194,6 +3346,13 @@ func (m *QuestionHistoryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case questionhistory.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown QuestionHistory field %s", name)
 }
@@ -3214,6 +3373,9 @@ func (m *QuestionHistoryMutation) AddedFields() []string {
 	if m.addposition != nil {
 		fields = append(fields, questionhistory.FieldPosition)
 	}
+	if m.addversion != nil {
+		fields = append(fields, questionhistory.FieldVersion)
+	}
 	return fields
 }
 
@@ -3230,6 +3392,8 @@ func (m *QuestionHistoryMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedContextId()
 	case questionhistory.FieldPosition:
 		return m.AddedPosition()
+	case questionhistory.FieldVersion:
+		return m.AddedVersion()
 	}
 	return nil, false
 }
@@ -3266,6 +3430,13 @@ func (m *QuestionHistoryMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPosition(v)
+		return nil
+	case questionhistory.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
 		return nil
 	}
 	return fmt.Errorf("unknown QuestionHistory numeric field %s", name)
@@ -3338,6 +3509,9 @@ func (m *QuestionHistoryMutation) ResetField(name string) error {
 		return nil
 	case questionhistory.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case questionhistory.FieldVersion:
+		m.ResetVersion()
 		return nil
 	}
 	return fmt.Errorf("unknown QuestionHistory field %s", name)

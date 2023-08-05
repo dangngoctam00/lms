@@ -95,6 +95,11 @@ func UpdatedAt(v time.Time) predicate.QuestionHistory {
 	return predicate.QuestionHistory(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldEQ(FieldVersion, v))
+}
+
 // HistoryTimeEQ applies the EQ predicate on the "history_time" field.
 func HistoryTimeEQ(v time.Time) predicate.QuestionHistory {
 	return predicate.QuestionHistory(sql.FieldEQ(FieldHistoryTime, v))
@@ -503,6 +508,46 @@ func UpdatedAtLT(v time.Time) predicate.QuestionHistory {
 // UpdatedAtLTE applies the LTE predicate on the "updatedAt" field.
 func UpdatedAtLTE(v time.Time) predicate.QuestionHistory {
 	return predicate.QuestionHistory(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int64) predicate.QuestionHistory {
+	return predicate.QuestionHistory(sql.FieldLTE(FieldVersion, v))
 }
 
 // And groups predicates with the AND operator between them.

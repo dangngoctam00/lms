@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
+	"time"
 )
 
 // Question holds the schema definition for the Question entity.
@@ -20,6 +21,11 @@ func (Question) Fields() []ent.Field {
 		field.String("questionType"),
 		field.JSON("data", json.RawMessage{}),
 		field.Time("updatedAt"),
+		field.Int64("version").
+			DefaultFunc(func() int64 {
+				return time.Now().UnixNano()
+			}).
+			Comment("Unix time of when the latest update occurred"),
 	}
 }
 

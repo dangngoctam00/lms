@@ -79,6 +79,11 @@ func UpdatedAt(v time.Time) predicate.Question {
 	return predicate.Question(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v int64) predicate.Question {
+	return predicate.Question(sql.FieldEQ(FieldVersion, v))
+}
+
 // ContextEQ applies the EQ predicate on the "context" field.
 func ContextEQ(v string) predicate.Question {
 	return predicate.Question(sql.FieldEQ(FieldContext, v))
@@ -327,6 +332,46 @@ func UpdatedAtLT(v time.Time) predicate.Question {
 // UpdatedAtLTE applies the LTE predicate on the "updatedAt" field.
 func UpdatedAtLTE(v time.Time) predicate.Question {
 	return predicate.Question(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v int64) predicate.Question {
+	return predicate.Question(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v int64) predicate.Question {
+	return predicate.Question(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...int64) predicate.Question {
+	return predicate.Question(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...int64) predicate.Question {
+	return predicate.Question(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v int64) predicate.Question {
+	return predicate.Question(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v int64) predicate.Question {
+	return predicate.Question(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v int64) predicate.Question {
+	return predicate.Question(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v int64) predicate.Question {
+	return predicate.Question(sql.FieldLTE(FieldVersion, v))
 }
 
 // And groups predicates with the AND operator between them.

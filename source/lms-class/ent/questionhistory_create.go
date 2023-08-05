@@ -106,6 +106,20 @@ func (qhc *QuestionHistoryCreate) SetUpdatedAt(t time.Time) *QuestionHistoryCrea
 	return qhc
 }
 
+// SetVersion sets the "version" field.
+func (qhc *QuestionHistoryCreate) SetVersion(i int64) *QuestionHistoryCreate {
+	qhc.mutation.SetVersion(i)
+	return qhc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qhc *QuestionHistoryCreate) SetNillableVersion(i *int64) *QuestionHistoryCreate {
+	if i != nil {
+		qhc.SetVersion(*i)
+	}
+	return qhc
+}
+
 // Mutation returns the QuestionHistoryMutation object of the builder.
 func (qhc *QuestionHistoryCreate) Mutation() *QuestionHistoryMutation {
 	return qhc.mutation
@@ -145,6 +159,10 @@ func (qhc *QuestionHistoryCreate) defaults() {
 		v := questionhistory.DefaultHistoryTime()
 		qhc.mutation.SetHistoryTime(v)
 	}
+	if _, ok := qhc.mutation.Version(); !ok {
+		v := questionhistory.DefaultVersion()
+		qhc.mutation.SetVersion(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -177,6 +195,9 @@ func (qhc *QuestionHistoryCreate) check() error {
 	}
 	if _, ok := qhc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "QuestionHistory.updatedAt"`)}
+	}
+	if _, ok := qhc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "QuestionHistory.version"`)}
 	}
 	return nil
 }
@@ -243,6 +264,10 @@ func (qhc *QuestionHistoryCreate) createSpec() (*QuestionHistory, *sqlgraph.Crea
 	if value, ok := qhc.mutation.UpdatedAt(); ok {
 		_spec.SetField(questionhistory.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := qhc.mutation.Version(); ok {
+		_spec.SetField(questionhistory.FieldVersion, field.TypeInt64, value)
+		_node.Version = value
 	}
 	return _node, _spec
 }

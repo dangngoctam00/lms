@@ -29,7 +29,9 @@ type Question struct {
 	// Data holds the value of the "data" field.
 	Data json.RawMessage `json:"data,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt    time.Time `json:"updatedAt,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	// Unix time of when the latest update occurred
+	Version      int64 `json:"version,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -40,7 +42,7 @@ func (*Question) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case question.FieldData:
 			values[i] = new([]byte)
-		case question.FieldID, question.FieldContextId, question.FieldPosition:
+		case question.FieldID, question.FieldContextId, question.FieldPosition, question.FieldVersion:
 			values[i] = new(sql.NullInt64)
 		case question.FieldContext, question.FieldQuestionType:
 			values[i] = new(sql.NullString)
@@ -105,6 +107,12 @@ func (q *Question) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				q.UpdatedAt = value.Time
 			}
+		case question.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				q.Version = value.Int64
+			}
 		default:
 			q.selectValues.Set(columns[i], values[i])
 		}
@@ -158,6 +166,9 @@ func (q *Question) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updatedAt=")
 	builder.WriteString(q.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", q.Version))
 	builder.WriteByte(')')
 	return builder.String()
 }

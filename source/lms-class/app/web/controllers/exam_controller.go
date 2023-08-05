@@ -68,7 +68,7 @@ func UpdateExam(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.LmsErrorResponseApi{Code: -1, Message: err.Error()})
 	}
-	return c.Status(fiber.StatusOK).JSON(dto.LmsResponseApi[ent.Exam]{Code: 0, Message: "OK"})
+	return c.Status(fiber.StatusOK).JSON(dto.LmsResponseApi[*struct{}]{Code: 0, Message: "OK"})
 }
 
 func PublishExam(c *fiber.Ctx) error {
@@ -80,5 +80,5 @@ func PublishExam(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.LmsErrorResponseApi{Code: -1, Message: err.Error()})
 	}
-	return c.Status(fiber.StatusOK).JSON(dto.LmsResponseApi[ent.Exam]{Code: 0, Message: "OK"})
+	return c.Status(fiber.StatusOK).JSON(dto.LmsResponseApi[*struct{}]{Code: 0, Message: "OK"})
 }

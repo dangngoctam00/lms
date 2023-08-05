@@ -23,6 +23,8 @@ const (
 	FieldData = "data"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
 	// Table holds the table name of the question in the database.
 	Table = "questions"
 )
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldQuestionType,
 	FieldData,
 	FieldUpdatedAt,
+	FieldVersion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -47,6 +50,11 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultVersion holds the default value on creation for the "version" field.
+	DefaultVersion func() int64
+)
 
 // OrderOption defines the ordering options for the Question queries.
 type OrderOption func(*sql.Selector)
@@ -79,4 +87,9 @@ func ByQuestionType(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updatedAt field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }

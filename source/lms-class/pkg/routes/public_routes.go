@@ -18,4 +18,5 @@ func PublicRoutes(a *fiber.App) {
 	route.Put("/exams/:id", controllers.UpdateExam)
 	route.Put("/exams/publish/:id", controllers.PublishExam)
 	route.Post("/questions", controllers.CreateQuestion)
+	route.Put("/questions/:id", controllers.UpdateQuestion)
 }

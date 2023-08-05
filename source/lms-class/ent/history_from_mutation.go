@@ -275,6 +275,10 @@ func (m *QuestionMutation) CreateHistoryFromCreate(ctx context.Context) error {
 		create = create.SetUpdatedAt(updatedat)
 	}
 
+	if version, exists := m.Version(); exists {
+		create = create.SetVersion(version)
+	}
+
 	_, err = create.Save(ctx)
 	if err != nil {
 		rollback(tx, err)
@@ -349,6 +353,12 @@ func (m *QuestionMutation) CreateHistoryFromUpdate(ctx context.Context) error {
 		create = create.SetUpdatedAt(question.UpdatedAt)
 	}
 
+	if version, exists := m.Version(); exists {
+		create = create.SetVersion(version)
+	} else {
+		create = create.SetVersion(question.Version)
+	}
+
 	_, err = create.Save(ctx)
 	if err != nil {
 		rollback(tx, err)
@@ -393,6 +403,7 @@ func (m *QuestionMutation) CreateHistoryFromDelete(ctx context.Context) error {
 		SetQuestionType(question.QuestionType).
 		SetData(question.Data).
 		SetUpdatedAt(question.UpdatedAt).
+		SetVersion(question.Version).
 		Save(ctx)
 	if err != nil {
 		rollback(tx, err)

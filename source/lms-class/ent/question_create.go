@@ -57,6 +57,20 @@ func (qc *QuestionCreate) SetUpdatedAt(t time.Time) *QuestionCreate {
 	return qc
 }
 
+// SetVersion sets the "version" field.
+func (qc *QuestionCreate) SetVersion(i int64) *QuestionCreate {
+	qc.mutation.SetVersion(i)
+	return qc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qc *QuestionCreate) SetNillableVersion(i *int64) *QuestionCreate {
+	if i != nil {
+		qc.SetVersion(*i)
+	}
+	return qc
+}
+
 // Mutation returns the QuestionMutation object of the builder.
 func (qc *QuestionCreate) Mutation() *QuestionMutation {
 	return qc.mutation
@@ -64,6 +78,7 @@ func (qc *QuestionCreate) Mutation() *QuestionMutation {
 
 // Save creates the Question in the database.
 func (qc *QuestionCreate) Save(ctx context.Context) (*Question, error) {
+	qc.defaults()
 	return withHooks(ctx, qc.sqlSave, qc.mutation, qc.hooks)
 }
 
@@ -89,6 +104,14 @@ func (qc *QuestionCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (qc *QuestionCreate) defaults() {
+	if _, ok := qc.mutation.Version(); !ok {
+		v := question.DefaultVersion()
+		qc.mutation.SetVersion(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (qc *QuestionCreate) check() error {
 	if _, ok := qc.mutation.Context(); !ok {
@@ -108,6 +131,9 @@ func (qc *QuestionCreate) check() error {
 	}
 	if _, ok := qc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "Question.updatedAt"`)}
+	}
+	if _, ok := qc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Question.version"`)}
 	}
 	return nil
 }
@@ -159,6 +185,10 @@ func (qc *QuestionCreate) createSpec() (*Question, *sqlgraph.CreateSpec) {
 		_spec.SetField(question.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := qc.mutation.Version(); ok {
+		_spec.SetField(question.FieldVersion, field.TypeInt64, value)
+		_node.Version = value
+	}
 	return _node, _spec
 }
 
@@ -176,6 +206,7 @@ func (qcb *QuestionCreateBulk) Save(ctx context.Context) ([]*Question, error) {
 	for i := range qcb.builders {
 		func(i int, root context.Context) {
 			builder := qcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*QuestionMutation)
 				if !ok {

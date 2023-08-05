@@ -56,6 +56,7 @@ var (
 		{Name: "question_type", Type: field.TypeString},
 		{Name: "data", Type: field.TypeJSON},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt64},
 	}
 	// QuestionsTable holds the schema information for the "questions" table.
 	QuestionsTable = &schema.Table{
@@ -76,6 +77,7 @@ var (
 		{Name: "question_type", Type: field.TypeString},
 		{Name: "data", Type: field.TypeJSON},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt64},
 	}
 	// QuestionHistoryTable holds the schema information for the "question_history" table.
 	QuestionHistoryTable = &schema.Table{

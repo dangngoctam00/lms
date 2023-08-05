@@ -35,6 +35,8 @@ const (
 	FieldData = "data"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
 	// Table holds the table name of the questionhistory in the database.
 	Table = "question_history"
 )
@@ -52,6 +54,7 @@ var Columns = []string{
 	FieldQuestionType,
 	FieldData,
 	FieldUpdatedAt,
+	FieldVersion,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -67,6 +70,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultHistoryTime holds the default value on creation for the "history_time" field.
 	DefaultHistoryTime func() time.Time
+	// DefaultVersion holds the default value on creation for the "version" field.
+	DefaultVersion func() int64
 )
 
 // OperationValidator is a validator for the "operation" field enum values. It is called by the builders before save.
@@ -130,4 +135,9 @@ func ByQuestionType(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updatedAt field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }

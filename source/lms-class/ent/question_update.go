@@ -86,6 +86,27 @@ func (qu *QuestionUpdate) SetUpdatedAt(t time.Time) *QuestionUpdate {
 	return qu
 }
 
+// SetVersion sets the "version" field.
+func (qu *QuestionUpdate) SetVersion(i int64) *QuestionUpdate {
+	qu.mutation.ResetVersion()
+	qu.mutation.SetVersion(i)
+	return qu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qu *QuestionUpdate) SetNillableVersion(i *int64) *QuestionUpdate {
+	if i != nil {
+		qu.SetVersion(*i)
+	}
+	return qu
+}
+
+// AddVersion adds i to the "version" field.
+func (qu *QuestionUpdate) AddVersion(i int64) *QuestionUpdate {
+	qu.mutation.AddVersion(i)
+	return qu
+}
+
 // Mutation returns the QuestionMutation object of the builder.
 func (qu *QuestionUpdate) Mutation() *QuestionMutation {
 	return qu.mutation
@@ -155,6 +176,12 @@ func (qu *QuestionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := qu.mutation.UpdatedAt(); ok {
 		_spec.SetField(question.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := qu.mutation.Version(); ok {
+		_spec.SetField(question.FieldVersion, field.TypeInt64, value)
+	}
+	if value, ok := qu.mutation.AddedVersion(); ok {
+		_spec.AddField(question.FieldVersion, field.TypeInt64, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, qu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -229,6 +256,27 @@ func (quo *QuestionUpdateOne) AppendData(jm json.RawMessage) *QuestionUpdateOne 
 // SetUpdatedAt sets the "updatedAt" field.
 func (quo *QuestionUpdateOne) SetUpdatedAt(t time.Time) *QuestionUpdateOne {
 	quo.mutation.SetUpdatedAt(t)
+	return quo
+}
+
+// SetVersion sets the "version" field.
+func (quo *QuestionUpdateOne) SetVersion(i int64) *QuestionUpdateOne {
+	quo.mutation.ResetVersion()
+	quo.mutation.SetVersion(i)
+	return quo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (quo *QuestionUpdateOne) SetNillableVersion(i *int64) *QuestionUpdateOne {
+	if i != nil {
+		quo.SetVersion(*i)
+	}
+	return quo
+}
+
+// AddVersion adds i to the "version" field.
+func (quo *QuestionUpdateOne) AddVersion(i int64) *QuestionUpdateOne {
+	quo.mutation.AddVersion(i)
 	return quo
 }
 
@@ -331,6 +379,12 @@ func (quo *QuestionUpdateOne) sqlSave(ctx context.Context) (_node *Question, err
 	}
 	if value, ok := quo.mutation.UpdatedAt(); ok {
 		_spec.SetField(question.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := quo.mutation.Version(); ok {
+		_spec.SetField(question.FieldVersion, field.TypeInt64, value)
+	}
+	if value, ok := quo.mutation.AddedVersion(); ok {
+		_spec.AddField(question.FieldVersion, field.TypeInt64, value)
 	}
 	_node = &Question{config: quo.config}
 	_spec.Assign = _node.assignValues

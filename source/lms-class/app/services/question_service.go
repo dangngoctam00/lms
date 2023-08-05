@@ -2,35 +2,31 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/devfeel/mapper"
+	"lms-class/app/queries"
 	"lms-class/app/web/dto"
 	"lms-class/ent"
 	"lms-class/ent/question"
-	"lms-class/ent/questionhistory"
 	"lms-class/pkg/utils"
-	"log"
 	"time"
 )
 
-func CreateQuestion(question *dto.Question) (*ent.Question, error) {
-	//if question.Context == dto.Exam {
-	//
-	//}
-	u, err := utils.EntClient.Question.
+func CreateQuestion(question *dto.Question) (*int, error) {
+	entity := utils.EntClient.Question.
 		Create().
 		SetContext(question.Context).
 		SetContextId(question.ContextId).
 		SetPosition(question.Position).
 		SetQuestionType(question.QuestionType).
 		SetData(question.Data).
-		SetUpdatedAt(time.Now()).
-		Save(context.Background())
+		SetUpdatedAt(time.Now())
+	id, err := queries.CreateQuestion(entity)
 	if err != nil {
-		return nil, fmt.Errorf("failed creating exam: %w", err)
+		return nil, fmt.Errorf("failed creating question: %w", err)
 	}
-	log.Println("Question was created: ", u)
-	return u, nil
+	return id, nil
 }
 
 func GetQuestionById(id int) (*ent.Question, error) {
@@ -44,45 +40,82 @@ func GetQuestionById(id int) (*ent.Question, error) {
 	return result, nil
 }
 
+func UpdateQuestion(id int, dto *dto.Question) error {
+	tx, err := utils.EntClient.Tx(context.Background())
+	if err != nil {
+		return errors.New("cannot create transaction because of " + err.Error())
+	}
+	defer Commit(tx)
+	_, err = GetQuestionById(id)
+	if err != nil {
+		return err
+	}
+	nextVer := time.Now().UnixNano()
+	_, err = tx.Question.UpdateOneID(id).Where(question.ID(id), question.Version(dto.Version)).
+		SetVersion(nextVer).
+		SetContext(dto.Context).
+		SetContextId(dto.ContextId).
+		SetPosition(dto.Position).
+		SetQuestionType(dto.QuestionType).
+		SetData(dto.Data).
+		SetUpdatedAt(time.Now()).
+		Save(context.Background())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetQuestionsByExamAndPublishedTime(examId int, lastPublished time.Time) ([]dto.QuestionDto, error) {
-	all, err := utils.EntClient.QuestionHistory.
-		Query().
-		Where(questionhistory.ContextEQ(dto.Exam),
-			questionhistory.ContextIdEQ(examId),
-			questionhistory.HistoryTimeLTE(lastPublished)).
-		All(context.Background())
+	all, err := queries.GetQuestionsByExamAndPublishedTime(examId, lastPublished)
 	if err != nil {
 		return nil, err
 	}
 	res := make([]dto.QuestionDto, len(all))
 	for i, v := range all {
-		questionDto := dto.QuestionDto{}
-		questionDto.DoSetData(v.QuestionType, v.Data)
-
-		mapper.SetEnableFieldIgnoreTag(true)
-		mapper.AutoMapper(v, &questionDto)
-		res[i] = questionDto
+		if d, err := mapQuestionHistory(v); err != nil {
+			return nil, err
+		} else {
+			res[i] = *d
+		}
 	}
 	return res, nil
 }
 
+func mapQuestionHistory(questionHistory *ent.QuestionHistory) (*dto.QuestionDto, error) {
+	questionDto := &dto.QuestionDto{}
+	questionDto.DoSetData(questionHistory.QuestionType, questionHistory.Data)
+	mapper.SetEnableFieldIgnoreTag(true)
+	if err := mapper.AutoMapper(questionHistory, questionDto); err != nil {
+		return nil, errors.New("unexpected error while mapping")
+	}
+	questionDto.ID = questionHistory.Ref
+	questionDto.UpdatedAt = &questionHistory.UpdatedAt
+	return questionDto, nil
+}
+
 func GetQuestionsByExam(examId int) ([]dto.QuestionDto, error) {
-	all, err := utils.EntClient.Question.
-		Query().
-		Where(question.ContextEQ(dto.Exam),
-			question.ContextIdEQ(examId)).
-		All(context.Background())
+	all, err := queries.GetQuestionsByExam(examId)
 	if err != nil {
 		return nil, err
 	}
 	res := make([]dto.QuestionDto, len(all))
 	for i, v := range all {
-		questionDto := dto.QuestionDto{}
-		questionDto.SetData(*v)
-
-		mapper.SetEnableFieldIgnoreTag(true)
-		mapper.AutoMapper(v, &questionDto)
-		res[i] = questionDto
+		if d, err := mapQuestion(v); err != nil {
+			return nil, err
+		} else {
+			res[i] = *d
+		}
 	}
 	return res, nil
+}
+
+func mapQuestion(v *ent.Question) (*dto.QuestionDto, error) {
+	questionDto := &dto.QuestionDto{}
+	questionDto.SetData(*v)
+	mapper.SetEnableFieldIgnoreTag(true)
+	if err := mapper.AutoMapper(v, questionDto); err != nil {
+		return nil, errors.New("unexpected error while mapping")
+	}
+	return questionDto, nil
 }

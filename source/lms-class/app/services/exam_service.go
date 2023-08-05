@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/devfeel/mapper"
+	"lms-class/app/queries"
 	"lms-class/app/web/dto"
 	"lms-class/ent"
 	"lms-class/ent/exam"
@@ -45,22 +46,12 @@ func CreateExam(exam *dto.ExamDto) (*ent.Exam, error) {
 }
 
 func UpdateExam(id int, examDto *dto.ExamDto) error {
-	//tx, _ := utils.EntClient.Tx(context.Background())
-	//tx.Exam.Query().Where(exam.ID(id)).For
 	tx, err2 := utils.EntClient.Tx(context.Background())
 	if err2 != nil {
 		log.Fatalf("failed creating transaction: %v", err2)
 	}
-	defer func(tx *ent.Tx) {
-		if err := tx.Commit(); err != nil {
-			tx.Rollback()
-			log.Fatal("unexpected failure:", err)
-		}
-	}(tx)
-	res, err := tx.Exam.Query().
-		Where(exam.IDEQ(id)).
-		ForUpdate().
-		Only(context.Background())
+	defer Commit(tx)
+	res, err := queries.GetExamForUpdate(id, tx)
 	if err != nil {
 		return err
 	}
@@ -76,6 +67,9 @@ func UpdateExam(id int, examDto *dto.ExamDto) error {
 		SetUpdatedAt(time.Now()).
 		Save(context.Background())
 	if err != nil {
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Fatalln("Error while trying roll back exception: ", err2)
+		}
 		return err
 	}
 	return nil
@@ -100,19 +94,43 @@ func PublishExam(id int) error {
 }
 
 func GetPublishedExam(id int) (*dto.ExamDto, error) {
-	res, err := utils.EntClient.Exam.Query().Where(exam.IDEQ(id)).Only(context.Background())
+	latest, err := queries.GetPublishedExam(id)
 	if err != nil {
 		return nil, err
 	}
-	if res.LastPublishedAt == nil {
+	if latest.LastPublishedAt == nil {
 		return nil, errors.New("exam hasn't published yet")
 	}
 	examDto := &dto.ExamDto{}
-	mapper.SetEnableFieldIgnoreTag(true)
-	mapper.AutoMapper(res, examDto)
-	publishedAt := res.LastPublishedAt
+	if examDto, err = mapExamHistory(latest); err != nil {
+		return nil, err
+	}
+	publishedAt := latest.LastPublishedAt
 	questionsDto, _ := GetQuestionsByExamAndPublishedTime(id, *publishedAt)
 	examDto.Questions = questionsDto
+	return examDto, nil
+}
+
+func mapExam(res *ent.Exam) (*dto.ExamDto, error) {
+	examDto := &dto.ExamDto{}
+	mapper.SetEnableFieldIgnoreTag(true)
+	err := mapper.AutoMapper(res, examDto)
+	if err != nil {
+		log.Print("unexpected error while mapping")
+		return nil, err
+	}
+	return examDto, nil
+}
+
+func mapExamHistory(res *ent.ExamHistory) (*dto.ExamDto, error) {
+	examDto := &dto.ExamDto{}
+	mapper.SetEnableFieldIgnoreTag(true)
+	err := mapper.AutoMapper(res, examDto)
+	examDto.Id = res.Ref
+	if err != nil {
+		log.Print("unexpected error while mapping")
+		return nil, err
+	}
 	return examDto, nil
 }
 
@@ -123,7 +141,9 @@ func GetExam(id int) (*dto.ExamDto, error) {
 	}
 	examDto := &dto.ExamDto{}
 	mapper.SetEnableFieldIgnoreTag(true)
-	mapper.AutoMapper(res, examDto)
+	if err = mapper.AutoMapper(res, examDto); err != nil {
+		return nil, err
+	}
 	if res.HavingDraft == false {
 		publishedAt := res.LastPublishedAt
 		questionsDto, _ := GetQuestionsByExamAndPublishedTime(id, *publishedAt)

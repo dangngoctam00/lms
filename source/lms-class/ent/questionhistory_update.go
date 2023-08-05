@@ -86,6 +86,27 @@ func (qhu *QuestionHistoryUpdate) SetUpdatedAt(t time.Time) *QuestionHistoryUpda
 	return qhu
 }
 
+// SetVersion sets the "version" field.
+func (qhu *QuestionHistoryUpdate) SetVersion(i int64) *QuestionHistoryUpdate {
+	qhu.mutation.ResetVersion()
+	qhu.mutation.SetVersion(i)
+	return qhu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qhu *QuestionHistoryUpdate) SetNillableVersion(i *int64) *QuestionHistoryUpdate {
+	if i != nil {
+		qhu.SetVersion(*i)
+	}
+	return qhu
+}
+
+// AddVersion adds i to the "version" field.
+func (qhu *QuestionHistoryUpdate) AddVersion(i int64) *QuestionHistoryUpdate {
+	qhu.mutation.AddVersion(i)
+	return qhu
+}
+
 // Mutation returns the QuestionHistoryMutation object of the builder.
 func (qhu *QuestionHistoryUpdate) Mutation() *QuestionHistoryMutation {
 	return qhu.mutation
@@ -162,6 +183,12 @@ func (qhu *QuestionHistoryUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := qhu.mutation.UpdatedAt(); ok {
 		_spec.SetField(questionhistory.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := qhu.mutation.Version(); ok {
+		_spec.SetField(questionhistory.FieldVersion, field.TypeInt64, value)
+	}
+	if value, ok := qhu.mutation.AddedVersion(); ok {
+		_spec.AddField(questionhistory.FieldVersion, field.TypeInt64, value)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, qhu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{questionhistory.Label}
@@ -235,6 +262,27 @@ func (qhuo *QuestionHistoryUpdateOne) AppendData(jm json.RawMessage) *QuestionHi
 // SetUpdatedAt sets the "updatedAt" field.
 func (qhuo *QuestionHistoryUpdateOne) SetUpdatedAt(t time.Time) *QuestionHistoryUpdateOne {
 	qhuo.mutation.SetUpdatedAt(t)
+	return qhuo
+}
+
+// SetVersion sets the "version" field.
+func (qhuo *QuestionHistoryUpdateOne) SetVersion(i int64) *QuestionHistoryUpdateOne {
+	qhuo.mutation.ResetVersion()
+	qhuo.mutation.SetVersion(i)
+	return qhuo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (qhuo *QuestionHistoryUpdateOne) SetNillableVersion(i *int64) *QuestionHistoryUpdateOne {
+	if i != nil {
+		qhuo.SetVersion(*i)
+	}
+	return qhuo
+}
+
+// AddVersion adds i to the "version" field.
+func (qhuo *QuestionHistoryUpdateOne) AddVersion(i int64) *QuestionHistoryUpdateOne {
+	qhuo.mutation.AddVersion(i)
 	return qhuo
 }
 
@@ -343,6 +391,12 @@ func (qhuo *QuestionHistoryUpdateOne) sqlSave(ctx context.Context) (_node *Quest
 	}
 	if value, ok := qhuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(questionhistory.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := qhuo.mutation.Version(); ok {
+		_spec.SetField(questionhistory.FieldVersion, field.TypeInt64, value)
+	}
+	if value, ok := qhuo.mutation.AddedVersion(); ok {
+		_spec.AddField(questionhistory.FieldVersion, field.TypeInt64, value)
 	}
 	_node = &QuestionHistory{config: qhuo.config}
 	_spec.Assign = _node.assignValues
