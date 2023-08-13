@@ -20,6 +20,10 @@ type Tx struct {
 	Question *QuestionClient
 	// QuestionHistory is the client for interacting with the QuestionHistory builders.
 	QuestionHistory *QuestionHistoryClient
+	// Quiz is the client for interacting with the Quiz builders.
+	Quiz *QuizClient
+	// QuizSubmission is the client for interacting with the QuizSubmission builders.
+	QuizSubmission *QuizSubmissionClient
 
 	// lazily loaded.
 	client     *Client
@@ -155,6 +159,8 @@ func (tx *Tx) init() {
 	tx.ExamHistory = NewExamHistoryClient(tx.config)
 	tx.Question = NewQuestionClient(tx.config)
 	tx.QuestionHistory = NewQuestionHistoryClient(tx.config)
+	tx.Quiz = NewQuizClient(tx.config)
+	tx.QuizSubmission = NewQuizSubmissionClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

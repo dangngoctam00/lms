@@ -3,6 +3,8 @@ package schema
 import (
 	"encoding/json"
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"time"
 )
@@ -32,4 +34,10 @@ func (Question) Fields() []ent.Field {
 // Edges of the Question.
 func (Question) Edges() []ent.Edge {
 	return nil
+}
+
+func (Question) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "question"},
+	}
 }

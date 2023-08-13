@@ -2,6 +2,9 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -25,5 +28,13 @@ func (Exam) Fields() []ent.Field {
 
 // Edges of the Exam.
 func (Exam) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("quizzes", Quiz.Type),
+	}
+}
+
+func (Exam) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "exam"},
+	}
 }

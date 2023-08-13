@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"lms-class/ent/exam"
+	"lms-class/ent/quiz"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -68,6 +69,21 @@ func (ec *ExamCreate) SetNillableLastPublishedAt(t *time.Time) *ExamCreate {
 func (ec *ExamCreate) SetUpdatedAt(t time.Time) *ExamCreate {
 	ec.mutation.SetUpdatedAt(t)
 	return ec
+}
+
+// AddQuizIDs adds the "quizzes" edge to the Quiz entity by IDs.
+func (ec *ExamCreate) AddQuizIDs(ids ...int) *ExamCreate {
+	ec.mutation.AddQuizIDs(ids...)
+	return ec
+}
+
+// AddQuizzes adds the "quizzes" edges to the Quiz entity.
+func (ec *ExamCreate) AddQuizzes(q ...*Quiz) *ExamCreate {
+	ids := make([]int, len(q))
+	for i := range q {
+		ids[i] = q[i].ID
+	}
+	return ec.AddQuizIDs(ids...)
 }
 
 // Mutation returns the ExamMutation object of the builder.
@@ -175,6 +191,22 @@ func (ec *ExamCreate) createSpec() (*Exam, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.UpdatedAt(); ok {
 		_spec.SetField(exam.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := ec.mutation.QuizzesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

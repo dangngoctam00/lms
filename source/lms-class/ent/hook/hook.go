@@ -56,6 +56,30 @@ func (f QuestionHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.QuestionHistoryMutation", m)
 }
 
+// The QuizFunc type is an adapter to allow the use of ordinary
+// function as Quiz mutator.
+type QuizFunc func(context.Context, *ent.QuizMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f QuizFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.QuizMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.QuizMutation", m)
+}
+
+// The QuizSubmissionFunc type is an adapter to allow the use of ordinary
+// function as QuizSubmission mutator.
+type QuizSubmissionFunc func(context.Context, *ent.QuizSubmissionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f QuizSubmissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.QuizSubmissionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.QuizSubmissionMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

@@ -2,12 +2,10 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"lms-class/app/web/controllers"
+	"lms-class/internal/web/controllers"
 )
 
-// PublicRoutes func for describe group of public routes.
 func PublicRoutes(a *fiber.App) {
-	// Create routes group.
 	route := a.Group("/api/v1")
 
 	route.Get("/questions/:id", controllers.GetQuestionById)
@@ -19,4 +17,8 @@ func PublicRoutes(a *fiber.App) {
 	route.Put("/exams/publish/:id", controllers.PublishExam)
 	route.Post("/questions", controllers.CreateQuestion)
 	route.Put("/questions/:id", controllers.UpdateQuestion)
+
+	route.Post("/quizzes", controllers.CreateQuiz)
+	route.Get("quizzes/:id", controllers.GetQuizById)
+	route.Post("quizzes/:id/do", controllers.DoQuiz)
 }

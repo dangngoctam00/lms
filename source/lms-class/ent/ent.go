@@ -10,6 +10,8 @@ import (
 	"lms-class/ent/examhistory"
 	"lms-class/ent/question"
 	"lms-class/ent/questionhistory"
+	"lms-class/ent/quiz"
+	"lms-class/ent/quizsubmission"
 	"reflect"
 	"sync"
 
@@ -80,6 +82,8 @@ func checkColumn(table, column string) error {
 			examhistory.Table:     examhistory.ValidColumn,
 			question.Table:        question.ValidColumn,
 			questionhistory.Table: questionhistory.ValidColumn,
+			quiz.Table:            quiz.ValidColumn,
+			quizsubmission.Table:  quizsubmission.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

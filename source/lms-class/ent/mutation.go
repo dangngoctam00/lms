@@ -12,6 +12,8 @@ import (
 	"lms-class/ent/predicate"
 	"lms-class/ent/question"
 	"lms-class/ent/questionhistory"
+	"lms-class/ent/quiz"
+	"lms-class/ent/quizsubmission"
 	"sync"
 	"time"
 
@@ -33,6 +35,8 @@ const (
 	TypeExamHistory     = "ExamHistory"
 	TypeQuestion        = "Question"
 	TypeQuestionHistory = "QuestionHistory"
+	TypeQuiz            = "Quiz"
+	TypeQuizSubmission  = "QuizSubmission"
 )
 
 // ExamMutation represents an operation that mutates the Exam nodes in the graph.
@@ -49,6 +53,9 @@ type ExamMutation struct {
 	lastPublishedAt *time.Time
 	updatedAt       *time.Time
 	clearedFields   map[string]struct{}
+	quizzes         map[int]struct{}
+	removedquizzes  map[int]struct{}
+	clearedquizzes  bool
 	done            bool
 	oldValue        func(context.Context) (*Exam, error)
 	predicates      []predicate.Exam
@@ -417,6 +424,60 @@ func (m *ExamMutation) ResetUpdatedAt() {
 	m.updatedAt = nil
 }
 
+// AddQuizIDs adds the "quizzes" edge to the Quiz entity by ids.
+func (m *ExamMutation) AddQuizIDs(ids ...int) {
+	if m.quizzes == nil {
+		m.quizzes = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.quizzes[ids[i]] = struct{}{}
+	}
+}
+
+// ClearQuizzes clears the "quizzes" edge to the Quiz entity.
+func (m *ExamMutation) ClearQuizzes() {
+	m.clearedquizzes = true
+}
+
+// QuizzesCleared reports if the "quizzes" edge to the Quiz entity was cleared.
+func (m *ExamMutation) QuizzesCleared() bool {
+	return m.clearedquizzes
+}
+
+// RemoveQuizIDs removes the "quizzes" edge to the Quiz entity by IDs.
+func (m *ExamMutation) RemoveQuizIDs(ids ...int) {
+	if m.removedquizzes == nil {
+		m.removedquizzes = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.quizzes, ids[i])
+		m.removedquizzes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedQuizzes returns the removed IDs of the "quizzes" edge to the Quiz entity.
+func (m *ExamMutation) RemovedQuizzesIDs() (ids []int) {
+	for id := range m.removedquizzes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// QuizzesIDs returns the "quizzes" edge IDs in the mutation.
+func (m *ExamMutation) QuizzesIDs() (ids []int) {
+	for id := range m.quizzes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetQuizzes resets all changes to the "quizzes" edge.
+func (m *ExamMutation) ResetQuizzes() {
+	m.quizzes = nil
+	m.clearedquizzes = false
+	m.removedquizzes = nil
+}
+
 // Where appends a list predicates to the ExamMutation builder.
 func (m *ExamMutation) Where(ps ...predicate.Exam) {
 	m.predicates = append(m.predicates, ps...)
@@ -661,49 +722,85 @@ func (m *ExamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ExamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.quizzes != nil {
+		edges = append(edges, exam.EdgeQuizzes)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *ExamMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case exam.EdgeQuizzes:
+		ids := make([]ent.Value, 0, len(m.quizzes))
+		for id := range m.quizzes {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ExamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedquizzes != nil {
+		edges = append(edges, exam.EdgeQuizzes)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ExamMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case exam.EdgeQuizzes:
+		ids := make([]ent.Value, 0, len(m.removedquizzes))
+		for id := range m.removedquizzes {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ExamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedquizzes {
+		edges = append(edges, exam.EdgeQuizzes)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *ExamMutation) EdgeCleared(name string) bool {
+	switch name {
+	case exam.EdgeQuizzes:
+		return m.clearedquizzes
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *ExamMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Exam unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *ExamMutation) ResetEdge(name string) error {
+	switch name {
+	case exam.EdgeQuizzes:
+		m.ResetQuizzes()
+		return nil
+	}
 	return fmt.Errorf("unknown Exam edge %s", name)
 }
 
@@ -3563,4 +3660,2626 @@ func (m *QuestionHistoryMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *QuestionHistoryMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown QuestionHistory edge %s", name)
+}
+
+// QuizMutation represents an operation that mutates the Quiz nodes in the graph.
+type QuizMutation struct {
+	config
+	op                       Op
+	typ                      string
+	id                       *int
+	title                    *string
+	description              *string
+	gradeTag                 *string
+	isPublished              *bool
+	createdAt                *time.Time
+	updatedAt                *time.Time
+	context                  *string
+	contextId                *int
+	addcontextId             *int
+	parentId                 *int
+	addparentId              *int
+	startedAt                *time.Time
+	finishedAt               *time.Time
+	timeLimit                *int
+	addtimeLimit             *int
+	maxAttempt               *int
+	addmaxAttempt            *int
+	viewPreviousSessions     *bool
+	viewPreviousSessionsTime *time.Time
+	passedScore              *int
+	addpassedScore           *int
+	finalGradedStrategy      *string
+	clearedFields            map[string]struct{}
+	exam                     *int
+	clearedexam              bool
+	submissions              map[int]struct{}
+	removedsubmissions       map[int]struct{}
+	clearedsubmissions       bool
+	done                     bool
+	oldValue                 func(context.Context) (*Quiz, error)
+	predicates               []predicate.Quiz
+}
+
+var _ ent.Mutation = (*QuizMutation)(nil)
+
+// quizOption allows management of the mutation configuration using functional options.
+type quizOption func(*QuizMutation)
+
+// newQuizMutation creates new mutation for the Quiz entity.
+func newQuizMutation(c config, op Op, opts ...quizOption) *QuizMutation {
+	m := &QuizMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeQuiz,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withQuizID sets the ID field of the mutation.
+func withQuizID(id int) quizOption {
+	return func(m *QuizMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Quiz
+		)
+		m.oldValue = func(ctx context.Context) (*Quiz, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Quiz.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withQuiz sets the old Quiz of the mutation.
+func withQuiz(node *Quiz) quizOption {
+	return func(m *QuizMutation) {
+		m.oldValue = func(context.Context) (*Quiz, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m QuizMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m QuizMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *QuizMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *QuizMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Quiz.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTitle sets the "title" field.
+func (m *QuizMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *QuizMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *QuizMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *QuizMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *QuizMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *QuizMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetGradeTag sets the "gradeTag" field.
+func (m *QuizMutation) SetGradeTag(s string) {
+	m.gradeTag = &s
+}
+
+// GradeTag returns the value of the "gradeTag" field in the mutation.
+func (m *QuizMutation) GradeTag() (r string, exists bool) {
+	v := m.gradeTag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGradeTag returns the old "gradeTag" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldGradeTag(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGradeTag is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGradeTag requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGradeTag: %w", err)
+	}
+	return oldValue.GradeTag, nil
+}
+
+// ResetGradeTag resets all changes to the "gradeTag" field.
+func (m *QuizMutation) ResetGradeTag() {
+	m.gradeTag = nil
+}
+
+// SetExamId sets the "examId" field.
+func (m *QuizMutation) SetExamId(i int) {
+	m.exam = &i
+}
+
+// ExamId returns the value of the "examId" field in the mutation.
+func (m *QuizMutation) ExamId() (r int, exists bool) {
+	v := m.exam
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExamId returns the old "examId" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldExamId(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExamId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExamId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExamId: %w", err)
+	}
+	return oldValue.ExamId, nil
+}
+
+// ClearExamId clears the value of the "examId" field.
+func (m *QuizMutation) ClearExamId() {
+	m.exam = nil
+	m.clearedFields[quiz.FieldExamId] = struct{}{}
+}
+
+// ExamIdCleared returns if the "examId" field was cleared in this mutation.
+func (m *QuizMutation) ExamIdCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldExamId]
+	return ok
+}
+
+// ResetExamId resets all changes to the "examId" field.
+func (m *QuizMutation) ResetExamId() {
+	m.exam = nil
+	delete(m.clearedFields, quiz.FieldExamId)
+}
+
+// SetIsPublished sets the "isPublished" field.
+func (m *QuizMutation) SetIsPublished(b bool) {
+	m.isPublished = &b
+}
+
+// IsPublished returns the value of the "isPublished" field in the mutation.
+func (m *QuizMutation) IsPublished() (r bool, exists bool) {
+	v := m.isPublished
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPublished returns the old "isPublished" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldIsPublished(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPublished is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPublished requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPublished: %w", err)
+	}
+	return oldValue.IsPublished, nil
+}
+
+// ResetIsPublished resets all changes to the "isPublished" field.
+func (m *QuizMutation) ResetIsPublished() {
+	m.isPublished = nil
+}
+
+// SetCreatedAt sets the "createdAt" field.
+func (m *QuizMutation) SetCreatedAt(t time.Time) {
+	m.createdAt = &t
+}
+
+// CreatedAt returns the value of the "createdAt" field in the mutation.
+func (m *QuizMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.createdAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "createdAt" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "createdAt" field.
+func (m *QuizMutation) ResetCreatedAt() {
+	m.createdAt = nil
+}
+
+// SetUpdatedAt sets the "updatedAt" field.
+func (m *QuizMutation) SetUpdatedAt(t time.Time) {
+	m.updatedAt = &t
+}
+
+// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+func (m *QuizMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updatedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updatedAt" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updatedAt" field.
+func (m *QuizMutation) ResetUpdatedAt() {
+	m.updatedAt = nil
+}
+
+// SetContext sets the "context" field.
+func (m *QuizMutation) SetContext(s string) {
+	m.context = &s
+}
+
+// Context returns the value of the "context" field in the mutation.
+func (m *QuizMutation) Context() (r string, exists bool) {
+	v := m.context
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContext returns the old "context" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldContext(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContext is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContext requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContext: %w", err)
+	}
+	return oldValue.Context, nil
+}
+
+// ResetContext resets all changes to the "context" field.
+func (m *QuizMutation) ResetContext() {
+	m.context = nil
+}
+
+// SetContextId sets the "contextId" field.
+func (m *QuizMutation) SetContextId(i int) {
+	m.contextId = &i
+	m.addcontextId = nil
+}
+
+// ContextId returns the value of the "contextId" field in the mutation.
+func (m *QuizMutation) ContextId() (r int, exists bool) {
+	v := m.contextId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContextId returns the old "contextId" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldContextId(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContextId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContextId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContextId: %w", err)
+	}
+	return oldValue.ContextId, nil
+}
+
+// AddContextId adds i to the "contextId" field.
+func (m *QuizMutation) AddContextId(i int) {
+	if m.addcontextId != nil {
+		*m.addcontextId += i
+	} else {
+		m.addcontextId = &i
+	}
+}
+
+// AddedContextId returns the value that was added to the "contextId" field in this mutation.
+func (m *QuizMutation) AddedContextId() (r int, exists bool) {
+	v := m.addcontextId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetContextId resets all changes to the "contextId" field.
+func (m *QuizMutation) ResetContextId() {
+	m.contextId = nil
+	m.addcontextId = nil
+}
+
+// SetParentId sets the "parentId" field.
+func (m *QuizMutation) SetParentId(i int) {
+	m.parentId = &i
+	m.addparentId = nil
+}
+
+// ParentId returns the value of the "parentId" field in the mutation.
+func (m *QuizMutation) ParentId() (r int, exists bool) {
+	v := m.parentId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParentId returns the old "parentId" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldParentId(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParentId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParentId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParentId: %w", err)
+	}
+	return oldValue.ParentId, nil
+}
+
+// AddParentId adds i to the "parentId" field.
+func (m *QuizMutation) AddParentId(i int) {
+	if m.addparentId != nil {
+		*m.addparentId += i
+	} else {
+		m.addparentId = &i
+	}
+}
+
+// AddedParentId returns the value that was added to the "parentId" field in this mutation.
+func (m *QuizMutation) AddedParentId() (r int, exists bool) {
+	v := m.addparentId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearParentId clears the value of the "parentId" field.
+func (m *QuizMutation) ClearParentId() {
+	m.parentId = nil
+	m.addparentId = nil
+	m.clearedFields[quiz.FieldParentId] = struct{}{}
+}
+
+// ParentIdCleared returns if the "parentId" field was cleared in this mutation.
+func (m *QuizMutation) ParentIdCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldParentId]
+	return ok
+}
+
+// ResetParentId resets all changes to the "parentId" field.
+func (m *QuizMutation) ResetParentId() {
+	m.parentId = nil
+	m.addparentId = nil
+	delete(m.clearedFields, quiz.FieldParentId)
+}
+
+// SetStartedAt sets the "startedAt" field.
+func (m *QuizMutation) SetStartedAt(t time.Time) {
+	m.startedAt = &t
+}
+
+// StartedAt returns the value of the "startedAt" field in the mutation.
+func (m *QuizMutation) StartedAt() (r time.Time, exists bool) {
+	v := m.startedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartedAt returns the old "startedAt" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldStartedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartedAt: %w", err)
+	}
+	return oldValue.StartedAt, nil
+}
+
+// ClearStartedAt clears the value of the "startedAt" field.
+func (m *QuizMutation) ClearStartedAt() {
+	m.startedAt = nil
+	m.clearedFields[quiz.FieldStartedAt] = struct{}{}
+}
+
+// StartedAtCleared returns if the "startedAt" field was cleared in this mutation.
+func (m *QuizMutation) StartedAtCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldStartedAt]
+	return ok
+}
+
+// ResetStartedAt resets all changes to the "startedAt" field.
+func (m *QuizMutation) ResetStartedAt() {
+	m.startedAt = nil
+	delete(m.clearedFields, quiz.FieldStartedAt)
+}
+
+// SetFinishedAt sets the "finishedAt" field.
+func (m *QuizMutation) SetFinishedAt(t time.Time) {
+	m.finishedAt = &t
+}
+
+// FinishedAt returns the value of the "finishedAt" field in the mutation.
+func (m *QuizMutation) FinishedAt() (r time.Time, exists bool) {
+	v := m.finishedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFinishedAt returns the old "finishedAt" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldFinishedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFinishedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFinishedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFinishedAt: %w", err)
+	}
+	return oldValue.FinishedAt, nil
+}
+
+// ClearFinishedAt clears the value of the "finishedAt" field.
+func (m *QuizMutation) ClearFinishedAt() {
+	m.finishedAt = nil
+	m.clearedFields[quiz.FieldFinishedAt] = struct{}{}
+}
+
+// FinishedAtCleared returns if the "finishedAt" field was cleared in this mutation.
+func (m *QuizMutation) FinishedAtCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldFinishedAt]
+	return ok
+}
+
+// ResetFinishedAt resets all changes to the "finishedAt" field.
+func (m *QuizMutation) ResetFinishedAt() {
+	m.finishedAt = nil
+	delete(m.clearedFields, quiz.FieldFinishedAt)
+}
+
+// SetTimeLimit sets the "timeLimit" field.
+func (m *QuizMutation) SetTimeLimit(i int) {
+	m.timeLimit = &i
+	m.addtimeLimit = nil
+}
+
+// TimeLimit returns the value of the "timeLimit" field in the mutation.
+func (m *QuizMutation) TimeLimit() (r int, exists bool) {
+	v := m.timeLimit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTimeLimit returns the old "timeLimit" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldTimeLimit(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTimeLimit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTimeLimit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTimeLimit: %w", err)
+	}
+	return oldValue.TimeLimit, nil
+}
+
+// AddTimeLimit adds i to the "timeLimit" field.
+func (m *QuizMutation) AddTimeLimit(i int) {
+	if m.addtimeLimit != nil {
+		*m.addtimeLimit += i
+	} else {
+		m.addtimeLimit = &i
+	}
+}
+
+// AddedTimeLimit returns the value that was added to the "timeLimit" field in this mutation.
+func (m *QuizMutation) AddedTimeLimit() (r int, exists bool) {
+	v := m.addtimeLimit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTimeLimit clears the value of the "timeLimit" field.
+func (m *QuizMutation) ClearTimeLimit() {
+	m.timeLimit = nil
+	m.addtimeLimit = nil
+	m.clearedFields[quiz.FieldTimeLimit] = struct{}{}
+}
+
+// TimeLimitCleared returns if the "timeLimit" field was cleared in this mutation.
+func (m *QuizMutation) TimeLimitCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldTimeLimit]
+	return ok
+}
+
+// ResetTimeLimit resets all changes to the "timeLimit" field.
+func (m *QuizMutation) ResetTimeLimit() {
+	m.timeLimit = nil
+	m.addtimeLimit = nil
+	delete(m.clearedFields, quiz.FieldTimeLimit)
+}
+
+// SetMaxAttempt sets the "maxAttempt" field.
+func (m *QuizMutation) SetMaxAttempt(i int) {
+	m.maxAttempt = &i
+	m.addmaxAttempt = nil
+}
+
+// MaxAttempt returns the value of the "maxAttempt" field in the mutation.
+func (m *QuizMutation) MaxAttempt() (r int, exists bool) {
+	v := m.maxAttempt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxAttempt returns the old "maxAttempt" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldMaxAttempt(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxAttempt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxAttempt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxAttempt: %w", err)
+	}
+	return oldValue.MaxAttempt, nil
+}
+
+// AddMaxAttempt adds i to the "maxAttempt" field.
+func (m *QuizMutation) AddMaxAttempt(i int) {
+	if m.addmaxAttempt != nil {
+		*m.addmaxAttempt += i
+	} else {
+		m.addmaxAttempt = &i
+	}
+}
+
+// AddedMaxAttempt returns the value that was added to the "maxAttempt" field in this mutation.
+func (m *QuizMutation) AddedMaxAttempt() (r int, exists bool) {
+	v := m.addmaxAttempt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMaxAttempt clears the value of the "maxAttempt" field.
+func (m *QuizMutation) ClearMaxAttempt() {
+	m.maxAttempt = nil
+	m.addmaxAttempt = nil
+	m.clearedFields[quiz.FieldMaxAttempt] = struct{}{}
+}
+
+// MaxAttemptCleared returns if the "maxAttempt" field was cleared in this mutation.
+func (m *QuizMutation) MaxAttemptCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldMaxAttempt]
+	return ok
+}
+
+// ResetMaxAttempt resets all changes to the "maxAttempt" field.
+func (m *QuizMutation) ResetMaxAttempt() {
+	m.maxAttempt = nil
+	m.addmaxAttempt = nil
+	delete(m.clearedFields, quiz.FieldMaxAttempt)
+}
+
+// SetViewPreviousSessions sets the "viewPreviousSessions" field.
+func (m *QuizMutation) SetViewPreviousSessions(b bool) {
+	m.viewPreviousSessions = &b
+}
+
+// ViewPreviousSessions returns the value of the "viewPreviousSessions" field in the mutation.
+func (m *QuizMutation) ViewPreviousSessions() (r bool, exists bool) {
+	v := m.viewPreviousSessions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViewPreviousSessions returns the old "viewPreviousSessions" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldViewPreviousSessions(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewPreviousSessions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewPreviousSessions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewPreviousSessions: %w", err)
+	}
+	return oldValue.ViewPreviousSessions, nil
+}
+
+// ResetViewPreviousSessions resets all changes to the "viewPreviousSessions" field.
+func (m *QuizMutation) ResetViewPreviousSessions() {
+	m.viewPreviousSessions = nil
+}
+
+// SetViewPreviousSessionsTime sets the "viewPreviousSessionsTime" field.
+func (m *QuizMutation) SetViewPreviousSessionsTime(t time.Time) {
+	m.viewPreviousSessionsTime = &t
+}
+
+// ViewPreviousSessionsTime returns the value of the "viewPreviousSessionsTime" field in the mutation.
+func (m *QuizMutation) ViewPreviousSessionsTime() (r time.Time, exists bool) {
+	v := m.viewPreviousSessionsTime
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViewPreviousSessionsTime returns the old "viewPreviousSessionsTime" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldViewPreviousSessionsTime(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewPreviousSessionsTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewPreviousSessionsTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewPreviousSessionsTime: %w", err)
+	}
+	return oldValue.ViewPreviousSessionsTime, nil
+}
+
+// ClearViewPreviousSessionsTime clears the value of the "viewPreviousSessionsTime" field.
+func (m *QuizMutation) ClearViewPreviousSessionsTime() {
+	m.viewPreviousSessionsTime = nil
+	m.clearedFields[quiz.FieldViewPreviousSessionsTime] = struct{}{}
+}
+
+// ViewPreviousSessionsTimeCleared returns if the "viewPreviousSessionsTime" field was cleared in this mutation.
+func (m *QuizMutation) ViewPreviousSessionsTimeCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldViewPreviousSessionsTime]
+	return ok
+}
+
+// ResetViewPreviousSessionsTime resets all changes to the "viewPreviousSessionsTime" field.
+func (m *QuizMutation) ResetViewPreviousSessionsTime() {
+	m.viewPreviousSessionsTime = nil
+	delete(m.clearedFields, quiz.FieldViewPreviousSessionsTime)
+}
+
+// SetPassedScore sets the "passedScore" field.
+func (m *QuizMutation) SetPassedScore(i int) {
+	m.passedScore = &i
+	m.addpassedScore = nil
+}
+
+// PassedScore returns the value of the "passedScore" field in the mutation.
+func (m *QuizMutation) PassedScore() (r int, exists bool) {
+	v := m.passedScore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPassedScore returns the old "passedScore" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldPassedScore(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPassedScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPassedScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPassedScore: %w", err)
+	}
+	return oldValue.PassedScore, nil
+}
+
+// AddPassedScore adds i to the "passedScore" field.
+func (m *QuizMutation) AddPassedScore(i int) {
+	if m.addpassedScore != nil {
+		*m.addpassedScore += i
+	} else {
+		m.addpassedScore = &i
+	}
+}
+
+// AddedPassedScore returns the value that was added to the "passedScore" field in this mutation.
+func (m *QuizMutation) AddedPassedScore() (r int, exists bool) {
+	v := m.addpassedScore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPassedScore clears the value of the "passedScore" field.
+func (m *QuizMutation) ClearPassedScore() {
+	m.passedScore = nil
+	m.addpassedScore = nil
+	m.clearedFields[quiz.FieldPassedScore] = struct{}{}
+}
+
+// PassedScoreCleared returns if the "passedScore" field was cleared in this mutation.
+func (m *QuizMutation) PassedScoreCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldPassedScore]
+	return ok
+}
+
+// ResetPassedScore resets all changes to the "passedScore" field.
+func (m *QuizMutation) ResetPassedScore() {
+	m.passedScore = nil
+	m.addpassedScore = nil
+	delete(m.clearedFields, quiz.FieldPassedScore)
+}
+
+// SetFinalGradedStrategy sets the "finalGradedStrategy" field.
+func (m *QuizMutation) SetFinalGradedStrategy(s string) {
+	m.finalGradedStrategy = &s
+}
+
+// FinalGradedStrategy returns the value of the "finalGradedStrategy" field in the mutation.
+func (m *QuizMutation) FinalGradedStrategy() (r string, exists bool) {
+	v := m.finalGradedStrategy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFinalGradedStrategy returns the old "finalGradedStrategy" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldFinalGradedStrategy(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFinalGradedStrategy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFinalGradedStrategy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFinalGradedStrategy: %w", err)
+	}
+	return oldValue.FinalGradedStrategy, nil
+}
+
+// ClearFinalGradedStrategy clears the value of the "finalGradedStrategy" field.
+func (m *QuizMutation) ClearFinalGradedStrategy() {
+	m.finalGradedStrategy = nil
+	m.clearedFields[quiz.FieldFinalGradedStrategy] = struct{}{}
+}
+
+// FinalGradedStrategyCleared returns if the "finalGradedStrategy" field was cleared in this mutation.
+func (m *QuizMutation) FinalGradedStrategyCleared() bool {
+	_, ok := m.clearedFields[quiz.FieldFinalGradedStrategy]
+	return ok
+}
+
+// ResetFinalGradedStrategy resets all changes to the "finalGradedStrategy" field.
+func (m *QuizMutation) ResetFinalGradedStrategy() {
+	m.finalGradedStrategy = nil
+	delete(m.clearedFields, quiz.FieldFinalGradedStrategy)
+}
+
+// SetExamID sets the "exam" edge to the Exam entity by id.
+func (m *QuizMutation) SetExamID(id int) {
+	m.exam = &id
+}
+
+// ClearExam clears the "exam" edge to the Exam entity.
+func (m *QuizMutation) ClearExam() {
+	m.clearedexam = true
+	m.clearedFields[quiz.FieldExamId] = struct{}{}
+}
+
+// ExamCleared reports if the "exam" edge to the Exam entity was cleared.
+func (m *QuizMutation) ExamCleared() bool {
+	return m.ExamIdCleared() || m.clearedexam
+}
+
+// ExamID returns the "exam" edge ID in the mutation.
+func (m *QuizMutation) ExamID() (id int, exists bool) {
+	if m.exam != nil {
+		return *m.exam, true
+	}
+	return
+}
+
+// ExamIDs returns the "exam" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ExamID instead. It exists only for internal usage by the builders.
+func (m *QuizMutation) ExamIDs() (ids []int) {
+	if id := m.exam; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetExam resets all changes to the "exam" edge.
+func (m *QuizMutation) ResetExam() {
+	m.exam = nil
+	m.clearedexam = false
+}
+
+// AddSubmissionIDs adds the "submissions" edge to the QuizSubmission entity by ids.
+func (m *QuizMutation) AddSubmissionIDs(ids ...int) {
+	if m.submissions == nil {
+		m.submissions = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.submissions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSubmissions clears the "submissions" edge to the QuizSubmission entity.
+func (m *QuizMutation) ClearSubmissions() {
+	m.clearedsubmissions = true
+}
+
+// SubmissionsCleared reports if the "submissions" edge to the QuizSubmission entity was cleared.
+func (m *QuizMutation) SubmissionsCleared() bool {
+	return m.clearedsubmissions
+}
+
+// RemoveSubmissionIDs removes the "submissions" edge to the QuizSubmission entity by IDs.
+func (m *QuizMutation) RemoveSubmissionIDs(ids ...int) {
+	if m.removedsubmissions == nil {
+		m.removedsubmissions = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.submissions, ids[i])
+		m.removedsubmissions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSubmissions returns the removed IDs of the "submissions" edge to the QuizSubmission entity.
+func (m *QuizMutation) RemovedSubmissionsIDs() (ids []int) {
+	for id := range m.removedsubmissions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SubmissionsIDs returns the "submissions" edge IDs in the mutation.
+func (m *QuizMutation) SubmissionsIDs() (ids []int) {
+	for id := range m.submissions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSubmissions resets all changes to the "submissions" edge.
+func (m *QuizMutation) ResetSubmissions() {
+	m.submissions = nil
+	m.clearedsubmissions = false
+	m.removedsubmissions = nil
+}
+
+// Where appends a list predicates to the QuizMutation builder.
+func (m *QuizMutation) Where(ps ...predicate.Quiz) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the QuizMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *QuizMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Quiz, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *QuizMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *QuizMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Quiz).
+func (m *QuizMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *QuizMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.title != nil {
+		fields = append(fields, quiz.FieldTitle)
+	}
+	if m.description != nil {
+		fields = append(fields, quiz.FieldDescription)
+	}
+	if m.gradeTag != nil {
+		fields = append(fields, quiz.FieldGradeTag)
+	}
+	if m.exam != nil {
+		fields = append(fields, quiz.FieldExamId)
+	}
+	if m.isPublished != nil {
+		fields = append(fields, quiz.FieldIsPublished)
+	}
+	if m.createdAt != nil {
+		fields = append(fields, quiz.FieldCreatedAt)
+	}
+	if m.updatedAt != nil {
+		fields = append(fields, quiz.FieldUpdatedAt)
+	}
+	if m.context != nil {
+		fields = append(fields, quiz.FieldContext)
+	}
+	if m.contextId != nil {
+		fields = append(fields, quiz.FieldContextId)
+	}
+	if m.parentId != nil {
+		fields = append(fields, quiz.FieldParentId)
+	}
+	if m.startedAt != nil {
+		fields = append(fields, quiz.FieldStartedAt)
+	}
+	if m.finishedAt != nil {
+		fields = append(fields, quiz.FieldFinishedAt)
+	}
+	if m.timeLimit != nil {
+		fields = append(fields, quiz.FieldTimeLimit)
+	}
+	if m.maxAttempt != nil {
+		fields = append(fields, quiz.FieldMaxAttempt)
+	}
+	if m.viewPreviousSessions != nil {
+		fields = append(fields, quiz.FieldViewPreviousSessions)
+	}
+	if m.viewPreviousSessionsTime != nil {
+		fields = append(fields, quiz.FieldViewPreviousSessionsTime)
+	}
+	if m.passedScore != nil {
+		fields = append(fields, quiz.FieldPassedScore)
+	}
+	if m.finalGradedStrategy != nil {
+		fields = append(fields, quiz.FieldFinalGradedStrategy)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *QuizMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case quiz.FieldTitle:
+		return m.Title()
+	case quiz.FieldDescription:
+		return m.Description()
+	case quiz.FieldGradeTag:
+		return m.GradeTag()
+	case quiz.FieldExamId:
+		return m.ExamId()
+	case quiz.FieldIsPublished:
+		return m.IsPublished()
+	case quiz.FieldCreatedAt:
+		return m.CreatedAt()
+	case quiz.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case quiz.FieldContext:
+		return m.Context()
+	case quiz.FieldContextId:
+		return m.ContextId()
+	case quiz.FieldParentId:
+		return m.ParentId()
+	case quiz.FieldStartedAt:
+		return m.StartedAt()
+	case quiz.FieldFinishedAt:
+		return m.FinishedAt()
+	case quiz.FieldTimeLimit:
+		return m.TimeLimit()
+	case quiz.FieldMaxAttempt:
+		return m.MaxAttempt()
+	case quiz.FieldViewPreviousSessions:
+		return m.ViewPreviousSessions()
+	case quiz.FieldViewPreviousSessionsTime:
+		return m.ViewPreviousSessionsTime()
+	case quiz.FieldPassedScore:
+		return m.PassedScore()
+	case quiz.FieldFinalGradedStrategy:
+		return m.FinalGradedStrategy()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *QuizMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case quiz.FieldTitle:
+		return m.OldTitle(ctx)
+	case quiz.FieldDescription:
+		return m.OldDescription(ctx)
+	case quiz.FieldGradeTag:
+		return m.OldGradeTag(ctx)
+	case quiz.FieldExamId:
+		return m.OldExamId(ctx)
+	case quiz.FieldIsPublished:
+		return m.OldIsPublished(ctx)
+	case quiz.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case quiz.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case quiz.FieldContext:
+		return m.OldContext(ctx)
+	case quiz.FieldContextId:
+		return m.OldContextId(ctx)
+	case quiz.FieldParentId:
+		return m.OldParentId(ctx)
+	case quiz.FieldStartedAt:
+		return m.OldStartedAt(ctx)
+	case quiz.FieldFinishedAt:
+		return m.OldFinishedAt(ctx)
+	case quiz.FieldTimeLimit:
+		return m.OldTimeLimit(ctx)
+	case quiz.FieldMaxAttempt:
+		return m.OldMaxAttempt(ctx)
+	case quiz.FieldViewPreviousSessions:
+		return m.OldViewPreviousSessions(ctx)
+	case quiz.FieldViewPreviousSessionsTime:
+		return m.OldViewPreviousSessionsTime(ctx)
+	case quiz.FieldPassedScore:
+		return m.OldPassedScore(ctx)
+	case quiz.FieldFinalGradedStrategy:
+		return m.OldFinalGradedStrategy(ctx)
+	}
+	return nil, fmt.Errorf("unknown Quiz field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *QuizMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case quiz.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case quiz.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case quiz.FieldGradeTag:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGradeTag(v)
+		return nil
+	case quiz.FieldExamId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExamId(v)
+		return nil
+	case quiz.FieldIsPublished:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPublished(v)
+		return nil
+	case quiz.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case quiz.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case quiz.FieldContext:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContext(v)
+		return nil
+	case quiz.FieldContextId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContextId(v)
+		return nil
+	case quiz.FieldParentId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParentId(v)
+		return nil
+	case quiz.FieldStartedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartedAt(v)
+		return nil
+	case quiz.FieldFinishedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFinishedAt(v)
+		return nil
+	case quiz.FieldTimeLimit:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTimeLimit(v)
+		return nil
+	case quiz.FieldMaxAttempt:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxAttempt(v)
+		return nil
+	case quiz.FieldViewPreviousSessions:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewPreviousSessions(v)
+		return nil
+	case quiz.FieldViewPreviousSessionsTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewPreviousSessionsTime(v)
+		return nil
+	case quiz.FieldPassedScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPassedScore(v)
+		return nil
+	case quiz.FieldFinalGradedStrategy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFinalGradedStrategy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Quiz field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *QuizMutation) AddedFields() []string {
+	var fields []string
+	if m.addcontextId != nil {
+		fields = append(fields, quiz.FieldContextId)
+	}
+	if m.addparentId != nil {
+		fields = append(fields, quiz.FieldParentId)
+	}
+	if m.addtimeLimit != nil {
+		fields = append(fields, quiz.FieldTimeLimit)
+	}
+	if m.addmaxAttempt != nil {
+		fields = append(fields, quiz.FieldMaxAttempt)
+	}
+	if m.addpassedScore != nil {
+		fields = append(fields, quiz.FieldPassedScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *QuizMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case quiz.FieldContextId:
+		return m.AddedContextId()
+	case quiz.FieldParentId:
+		return m.AddedParentId()
+	case quiz.FieldTimeLimit:
+		return m.AddedTimeLimit()
+	case quiz.FieldMaxAttempt:
+		return m.AddedMaxAttempt()
+	case quiz.FieldPassedScore:
+		return m.AddedPassedScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *QuizMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case quiz.FieldContextId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContextId(v)
+		return nil
+	case quiz.FieldParentId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddParentId(v)
+		return nil
+	case quiz.FieldTimeLimit:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTimeLimit(v)
+		return nil
+	case quiz.FieldMaxAttempt:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxAttempt(v)
+		return nil
+	case quiz.FieldPassedScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPassedScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Quiz numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *QuizMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(quiz.FieldExamId) {
+		fields = append(fields, quiz.FieldExamId)
+	}
+	if m.FieldCleared(quiz.FieldParentId) {
+		fields = append(fields, quiz.FieldParentId)
+	}
+	if m.FieldCleared(quiz.FieldStartedAt) {
+		fields = append(fields, quiz.FieldStartedAt)
+	}
+	if m.FieldCleared(quiz.FieldFinishedAt) {
+		fields = append(fields, quiz.FieldFinishedAt)
+	}
+	if m.FieldCleared(quiz.FieldTimeLimit) {
+		fields = append(fields, quiz.FieldTimeLimit)
+	}
+	if m.FieldCleared(quiz.FieldMaxAttempt) {
+		fields = append(fields, quiz.FieldMaxAttempt)
+	}
+	if m.FieldCleared(quiz.FieldViewPreviousSessionsTime) {
+		fields = append(fields, quiz.FieldViewPreviousSessionsTime)
+	}
+	if m.FieldCleared(quiz.FieldPassedScore) {
+		fields = append(fields, quiz.FieldPassedScore)
+	}
+	if m.FieldCleared(quiz.FieldFinalGradedStrategy) {
+		fields = append(fields, quiz.FieldFinalGradedStrategy)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *QuizMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *QuizMutation) ClearField(name string) error {
+	switch name {
+	case quiz.FieldExamId:
+		m.ClearExamId()
+		return nil
+	case quiz.FieldParentId:
+		m.ClearParentId()
+		return nil
+	case quiz.FieldStartedAt:
+		m.ClearStartedAt()
+		return nil
+	case quiz.FieldFinishedAt:
+		m.ClearFinishedAt()
+		return nil
+	case quiz.FieldTimeLimit:
+		m.ClearTimeLimit()
+		return nil
+	case quiz.FieldMaxAttempt:
+		m.ClearMaxAttempt()
+		return nil
+	case quiz.FieldViewPreviousSessionsTime:
+		m.ClearViewPreviousSessionsTime()
+		return nil
+	case quiz.FieldPassedScore:
+		m.ClearPassedScore()
+		return nil
+	case quiz.FieldFinalGradedStrategy:
+		m.ClearFinalGradedStrategy()
+		return nil
+	}
+	return fmt.Errorf("unknown Quiz nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *QuizMutation) ResetField(name string) error {
+	switch name {
+	case quiz.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case quiz.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case quiz.FieldGradeTag:
+		m.ResetGradeTag()
+		return nil
+	case quiz.FieldExamId:
+		m.ResetExamId()
+		return nil
+	case quiz.FieldIsPublished:
+		m.ResetIsPublished()
+		return nil
+	case quiz.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case quiz.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case quiz.FieldContext:
+		m.ResetContext()
+		return nil
+	case quiz.FieldContextId:
+		m.ResetContextId()
+		return nil
+	case quiz.FieldParentId:
+		m.ResetParentId()
+		return nil
+	case quiz.FieldStartedAt:
+		m.ResetStartedAt()
+		return nil
+	case quiz.FieldFinishedAt:
+		m.ResetFinishedAt()
+		return nil
+	case quiz.FieldTimeLimit:
+		m.ResetTimeLimit()
+		return nil
+	case quiz.FieldMaxAttempt:
+		m.ResetMaxAttempt()
+		return nil
+	case quiz.FieldViewPreviousSessions:
+		m.ResetViewPreviousSessions()
+		return nil
+	case quiz.FieldViewPreviousSessionsTime:
+		m.ResetViewPreviousSessionsTime()
+		return nil
+	case quiz.FieldPassedScore:
+		m.ResetPassedScore()
+		return nil
+	case quiz.FieldFinalGradedStrategy:
+		m.ResetFinalGradedStrategy()
+		return nil
+	}
+	return fmt.Errorf("unknown Quiz field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *QuizMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.exam != nil {
+		edges = append(edges, quiz.EdgeExam)
+	}
+	if m.submissions != nil {
+		edges = append(edges, quiz.EdgeSubmissions)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *QuizMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case quiz.EdgeExam:
+		if id := m.exam; id != nil {
+			return []ent.Value{*id}
+		}
+	case quiz.EdgeSubmissions:
+		ids := make([]ent.Value, 0, len(m.submissions))
+		for id := range m.submissions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *QuizMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedsubmissions != nil {
+		edges = append(edges, quiz.EdgeSubmissions)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *QuizMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case quiz.EdgeSubmissions:
+		ids := make([]ent.Value, 0, len(m.removedsubmissions))
+		for id := range m.removedsubmissions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *QuizMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedexam {
+		edges = append(edges, quiz.EdgeExam)
+	}
+	if m.clearedsubmissions {
+		edges = append(edges, quiz.EdgeSubmissions)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *QuizMutation) EdgeCleared(name string) bool {
+	switch name {
+	case quiz.EdgeExam:
+		return m.clearedexam
+	case quiz.EdgeSubmissions:
+		return m.clearedsubmissions
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *QuizMutation) ClearEdge(name string) error {
+	switch name {
+	case quiz.EdgeExam:
+		m.ClearExam()
+		return nil
+	}
+	return fmt.Errorf("unknown Quiz unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *QuizMutation) ResetEdge(name string) error {
+	switch name {
+	case quiz.EdgeExam:
+		m.ResetExam()
+		return nil
+	case quiz.EdgeSubmissions:
+		m.ResetSubmissions()
+		return nil
+	}
+	return fmt.Errorf("unknown Quiz edge %s", name)
+}
+
+// QuizSubmissionMutation represents an operation that mutates the QuizSubmission nodes in the graph.
+type QuizSubmissionMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	userId          *int
+	adduserId       *int
+	startedAt       *time.Time
+	submittedAt     *time.Time
+	questions       *json.RawMessage
+	appendquestions json.RawMessage
+	answers         *json.RawMessage
+	appendanswers   json.RawMessage
+	score           *int
+	addscore        *int
+	clearedFields   map[string]struct{}
+	quiz            *int
+	clearedquiz     bool
+	done            bool
+	oldValue        func(context.Context) (*QuizSubmission, error)
+	predicates      []predicate.QuizSubmission
+}
+
+var _ ent.Mutation = (*QuizSubmissionMutation)(nil)
+
+// quizsubmissionOption allows management of the mutation configuration using functional options.
+type quizsubmissionOption func(*QuizSubmissionMutation)
+
+// newQuizSubmissionMutation creates new mutation for the QuizSubmission entity.
+func newQuizSubmissionMutation(c config, op Op, opts ...quizsubmissionOption) *QuizSubmissionMutation {
+	m := &QuizSubmissionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeQuizSubmission,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withQuizSubmissionID sets the ID field of the mutation.
+func withQuizSubmissionID(id int) quizsubmissionOption {
+	return func(m *QuizSubmissionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *QuizSubmission
+		)
+		m.oldValue = func(ctx context.Context) (*QuizSubmission, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().QuizSubmission.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withQuizSubmission sets the old QuizSubmission of the mutation.
+func withQuizSubmission(node *QuizSubmission) quizsubmissionOption {
+	return func(m *QuizSubmissionMutation) {
+		m.oldValue = func(context.Context) (*QuizSubmission, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m QuizSubmissionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m QuizSubmissionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *QuizSubmissionMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *QuizSubmissionMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().QuizSubmission.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetQuizId sets the "quizId" field.
+func (m *QuizSubmissionMutation) SetQuizId(i int) {
+	m.quiz = &i
+}
+
+// QuizId returns the value of the "quizId" field in the mutation.
+func (m *QuizSubmissionMutation) QuizId() (r int, exists bool) {
+	v := m.quiz
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQuizId returns the old "quizId" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldQuizId(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQuizId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQuizId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQuizId: %w", err)
+	}
+	return oldValue.QuizId, nil
+}
+
+// ResetQuizId resets all changes to the "quizId" field.
+func (m *QuizSubmissionMutation) ResetQuizId() {
+	m.quiz = nil
+}
+
+// SetUserId sets the "userId" field.
+func (m *QuizSubmissionMutation) SetUserId(i int) {
+	m.userId = &i
+	m.adduserId = nil
+}
+
+// UserId returns the value of the "userId" field in the mutation.
+func (m *QuizSubmissionMutation) UserId() (r int, exists bool) {
+	v := m.userId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserId returns the old "userId" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldUserId(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserId: %w", err)
+	}
+	return oldValue.UserId, nil
+}
+
+// AddUserId adds i to the "userId" field.
+func (m *QuizSubmissionMutation) AddUserId(i int) {
+	if m.adduserId != nil {
+		*m.adduserId += i
+	} else {
+		m.adduserId = &i
+	}
+}
+
+// AddedUserId returns the value that was added to the "userId" field in this mutation.
+func (m *QuizSubmissionMutation) AddedUserId() (r int, exists bool) {
+	v := m.adduserId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserId resets all changes to the "userId" field.
+func (m *QuizSubmissionMutation) ResetUserId() {
+	m.userId = nil
+	m.adduserId = nil
+}
+
+// SetStartedAt sets the "startedAt" field.
+func (m *QuizSubmissionMutation) SetStartedAt(t time.Time) {
+	m.startedAt = &t
+}
+
+// StartedAt returns the value of the "startedAt" field in the mutation.
+func (m *QuizSubmissionMutation) StartedAt() (r time.Time, exists bool) {
+	v := m.startedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartedAt returns the old "startedAt" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldStartedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartedAt: %w", err)
+	}
+	return oldValue.StartedAt, nil
+}
+
+// ResetStartedAt resets all changes to the "startedAt" field.
+func (m *QuizSubmissionMutation) ResetStartedAt() {
+	m.startedAt = nil
+}
+
+// SetSubmittedAt sets the "submittedAt" field.
+func (m *QuizSubmissionMutation) SetSubmittedAt(t time.Time) {
+	m.submittedAt = &t
+}
+
+// SubmittedAt returns the value of the "submittedAt" field in the mutation.
+func (m *QuizSubmissionMutation) SubmittedAt() (r time.Time, exists bool) {
+	v := m.submittedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubmittedAt returns the old "submittedAt" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldSubmittedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubmittedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubmittedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubmittedAt: %w", err)
+	}
+	return oldValue.SubmittedAt, nil
+}
+
+// ClearSubmittedAt clears the value of the "submittedAt" field.
+func (m *QuizSubmissionMutation) ClearSubmittedAt() {
+	m.submittedAt = nil
+	m.clearedFields[quizsubmission.FieldSubmittedAt] = struct{}{}
+}
+
+// SubmittedAtCleared returns if the "submittedAt" field was cleared in this mutation.
+func (m *QuizSubmissionMutation) SubmittedAtCleared() bool {
+	_, ok := m.clearedFields[quizsubmission.FieldSubmittedAt]
+	return ok
+}
+
+// ResetSubmittedAt resets all changes to the "submittedAt" field.
+func (m *QuizSubmissionMutation) ResetSubmittedAt() {
+	m.submittedAt = nil
+	delete(m.clearedFields, quizsubmission.FieldSubmittedAt)
+}
+
+// SetQuestions sets the "questions" field.
+func (m *QuizSubmissionMutation) SetQuestions(jm json.RawMessage) {
+	m.questions = &jm
+	m.appendquestions = nil
+}
+
+// Questions returns the value of the "questions" field in the mutation.
+func (m *QuizSubmissionMutation) Questions() (r json.RawMessage, exists bool) {
+	v := m.questions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQuestions returns the old "questions" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldQuestions(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQuestions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQuestions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQuestions: %w", err)
+	}
+	return oldValue.Questions, nil
+}
+
+// AppendQuestions adds jm to the "questions" field.
+func (m *QuizSubmissionMutation) AppendQuestions(jm json.RawMessage) {
+	m.appendquestions = append(m.appendquestions, jm...)
+}
+
+// AppendedQuestions returns the list of values that were appended to the "questions" field in this mutation.
+func (m *QuizSubmissionMutation) AppendedQuestions() (json.RawMessage, bool) {
+	if len(m.appendquestions) == 0 {
+		return nil, false
+	}
+	return m.appendquestions, true
+}
+
+// ResetQuestions resets all changes to the "questions" field.
+func (m *QuizSubmissionMutation) ResetQuestions() {
+	m.questions = nil
+	m.appendquestions = nil
+}
+
+// SetAnswers sets the "answers" field.
+func (m *QuizSubmissionMutation) SetAnswers(jm json.RawMessage) {
+	m.answers = &jm
+	m.appendanswers = nil
+}
+
+// Answers returns the value of the "answers" field in the mutation.
+func (m *QuizSubmissionMutation) Answers() (r json.RawMessage, exists bool) {
+	v := m.answers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAnswers returns the old "answers" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAnswers is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAnswers requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAnswers: %w", err)
+	}
+	return oldValue.Answers, nil
+}
+
+// AppendAnswers adds jm to the "answers" field.
+func (m *QuizSubmissionMutation) AppendAnswers(jm json.RawMessage) {
+	m.appendanswers = append(m.appendanswers, jm...)
+}
+
+// AppendedAnswers returns the list of values that were appended to the "answers" field in this mutation.
+func (m *QuizSubmissionMutation) AppendedAnswers() (json.RawMessage, bool) {
+	if len(m.appendanswers) == 0 {
+		return nil, false
+	}
+	return m.appendanswers, true
+}
+
+// ClearAnswers clears the value of the "answers" field.
+func (m *QuizSubmissionMutation) ClearAnswers() {
+	m.answers = nil
+	m.appendanswers = nil
+	m.clearedFields[quizsubmission.FieldAnswers] = struct{}{}
+}
+
+// AnswersCleared returns if the "answers" field was cleared in this mutation.
+func (m *QuizSubmissionMutation) AnswersCleared() bool {
+	_, ok := m.clearedFields[quizsubmission.FieldAnswers]
+	return ok
+}
+
+// ResetAnswers resets all changes to the "answers" field.
+func (m *QuizSubmissionMutation) ResetAnswers() {
+	m.answers = nil
+	m.appendanswers = nil
+	delete(m.clearedFields, quizsubmission.FieldAnswers)
+}
+
+// SetScore sets the "score" field.
+func (m *QuizSubmissionMutation) SetScore(i int) {
+	m.score = &i
+	m.addscore = nil
+}
+
+// Score returns the value of the "score" field in the mutation.
+func (m *QuizSubmissionMutation) Score() (r int, exists bool) {
+	v := m.score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScore returns the old "score" field's value of the QuizSubmission entity.
+// If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizSubmissionMutation) OldScore(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScore: %w", err)
+	}
+	return oldValue.Score, nil
+}
+
+// AddScore adds i to the "score" field.
+func (m *QuizSubmissionMutation) AddScore(i int) {
+	if m.addscore != nil {
+		*m.addscore += i
+	} else {
+		m.addscore = &i
+	}
+}
+
+// AddedScore returns the value that was added to the "score" field in this mutation.
+func (m *QuizSubmissionMutation) AddedScore() (r int, exists bool) {
+	v := m.addscore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearScore clears the value of the "score" field.
+func (m *QuizSubmissionMutation) ClearScore() {
+	m.score = nil
+	m.addscore = nil
+	m.clearedFields[quizsubmission.FieldScore] = struct{}{}
+}
+
+// ScoreCleared returns if the "score" field was cleared in this mutation.
+func (m *QuizSubmissionMutation) ScoreCleared() bool {
+	_, ok := m.clearedFields[quizsubmission.FieldScore]
+	return ok
+}
+
+// ResetScore resets all changes to the "score" field.
+func (m *QuizSubmissionMutation) ResetScore() {
+	m.score = nil
+	m.addscore = nil
+	delete(m.clearedFields, quizsubmission.FieldScore)
+}
+
+// SetQuizID sets the "quiz" edge to the Quiz entity by id.
+func (m *QuizSubmissionMutation) SetQuizID(id int) {
+	m.quiz = &id
+}
+
+// ClearQuiz clears the "quiz" edge to the Quiz entity.
+func (m *QuizSubmissionMutation) ClearQuiz() {
+	m.clearedquiz = true
+	m.clearedFields[quizsubmission.FieldQuizId] = struct{}{}
+}
+
+// QuizCleared reports if the "quiz" edge to the Quiz entity was cleared.
+func (m *QuizSubmissionMutation) QuizCleared() bool {
+	return m.clearedquiz
+}
+
+// QuizID returns the "quiz" edge ID in the mutation.
+func (m *QuizSubmissionMutation) QuizID() (id int, exists bool) {
+	if m.quiz != nil {
+		return *m.quiz, true
+	}
+	return
+}
+
+// QuizIDs returns the "quiz" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// QuizID instead. It exists only for internal usage by the builders.
+func (m *QuizSubmissionMutation) QuizIDs() (ids []int) {
+	if id := m.quiz; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetQuiz resets all changes to the "quiz" edge.
+func (m *QuizSubmissionMutation) ResetQuiz() {
+	m.quiz = nil
+	m.clearedquiz = false
+}
+
+// Where appends a list predicates to the QuizSubmissionMutation builder.
+func (m *QuizSubmissionMutation) Where(ps ...predicate.QuizSubmission) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the QuizSubmissionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *QuizSubmissionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.QuizSubmission, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *QuizSubmissionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *QuizSubmissionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (QuizSubmission).
+func (m *QuizSubmissionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *QuizSubmissionMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.quiz != nil {
+		fields = append(fields, quizsubmission.FieldQuizId)
+	}
+	if m.userId != nil {
+		fields = append(fields, quizsubmission.FieldUserId)
+	}
+	if m.startedAt != nil {
+		fields = append(fields, quizsubmission.FieldStartedAt)
+	}
+	if m.submittedAt != nil {
+		fields = append(fields, quizsubmission.FieldSubmittedAt)
+	}
+	if m.questions != nil {
+		fields = append(fields, quizsubmission.FieldQuestions)
+	}
+	if m.answers != nil {
+		fields = append(fields, quizsubmission.FieldAnswers)
+	}
+	if m.score != nil {
+		fields = append(fields, quizsubmission.FieldScore)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *QuizSubmissionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case quizsubmission.FieldQuizId:
+		return m.QuizId()
+	case quizsubmission.FieldUserId:
+		return m.UserId()
+	case quizsubmission.FieldStartedAt:
+		return m.StartedAt()
+	case quizsubmission.FieldSubmittedAt:
+		return m.SubmittedAt()
+	case quizsubmission.FieldQuestions:
+		return m.Questions()
+	case quizsubmission.FieldAnswers:
+		return m.Answers()
+	case quizsubmission.FieldScore:
+		return m.Score()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *QuizSubmissionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case quizsubmission.FieldQuizId:
+		return m.OldQuizId(ctx)
+	case quizsubmission.FieldUserId:
+		return m.OldUserId(ctx)
+	case quizsubmission.FieldStartedAt:
+		return m.OldStartedAt(ctx)
+	case quizsubmission.FieldSubmittedAt:
+		return m.OldSubmittedAt(ctx)
+	case quizsubmission.FieldQuestions:
+		return m.OldQuestions(ctx)
+	case quizsubmission.FieldAnswers:
+		return m.OldAnswers(ctx)
+	case quizsubmission.FieldScore:
+		return m.OldScore(ctx)
+	}
+	return nil, fmt.Errorf("unknown QuizSubmission field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *QuizSubmissionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case quizsubmission.FieldQuizId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQuizId(v)
+		return nil
+	case quizsubmission.FieldUserId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserId(v)
+		return nil
+	case quizsubmission.FieldStartedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartedAt(v)
+		return nil
+	case quizsubmission.FieldSubmittedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubmittedAt(v)
+		return nil
+	case quizsubmission.FieldQuestions:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQuestions(v)
+		return nil
+	case quizsubmission.FieldAnswers:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAnswers(v)
+		return nil
+	case quizsubmission.FieldScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown QuizSubmission field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *QuizSubmissionMutation) AddedFields() []string {
+	var fields []string
+	if m.adduserId != nil {
+		fields = append(fields, quizsubmission.FieldUserId)
+	}
+	if m.addscore != nil {
+		fields = append(fields, quizsubmission.FieldScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *QuizSubmissionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case quizsubmission.FieldUserId:
+		return m.AddedUserId()
+	case quizsubmission.FieldScore:
+		return m.AddedScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *QuizSubmissionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case quizsubmission.FieldUserId:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserId(v)
+		return nil
+	case quizsubmission.FieldScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown QuizSubmission numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *QuizSubmissionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(quizsubmission.FieldSubmittedAt) {
+		fields = append(fields, quizsubmission.FieldSubmittedAt)
+	}
+	if m.FieldCleared(quizsubmission.FieldAnswers) {
+		fields = append(fields, quizsubmission.FieldAnswers)
+	}
+	if m.FieldCleared(quizsubmission.FieldScore) {
+		fields = append(fields, quizsubmission.FieldScore)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *QuizSubmissionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *QuizSubmissionMutation) ClearField(name string) error {
+	switch name {
+	case quizsubmission.FieldSubmittedAt:
+		m.ClearSubmittedAt()
+		return nil
+	case quizsubmission.FieldAnswers:
+		m.ClearAnswers()
+		return nil
+	case quizsubmission.FieldScore:
+		m.ClearScore()
+		return nil
+	}
+	return fmt.Errorf("unknown QuizSubmission nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *QuizSubmissionMutation) ResetField(name string) error {
+	switch name {
+	case quizsubmission.FieldQuizId:
+		m.ResetQuizId()
+		return nil
+	case quizsubmission.FieldUserId:
+		m.ResetUserId()
+		return nil
+	case quizsubmission.FieldStartedAt:
+		m.ResetStartedAt()
+		return nil
+	case quizsubmission.FieldSubmittedAt:
+		m.ResetSubmittedAt()
+		return nil
+	case quizsubmission.FieldQuestions:
+		m.ResetQuestions()
+		return nil
+	case quizsubmission.FieldAnswers:
+		m.ResetAnswers()
+		return nil
+	case quizsubmission.FieldScore:
+		m.ResetScore()
+		return nil
+	}
+	return fmt.Errorf("unknown QuizSubmission field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *QuizSubmissionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.quiz != nil {
+		edges = append(edges, quizsubmission.EdgeQuiz)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *QuizSubmissionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case quizsubmission.EdgeQuiz:
+		if id := m.quiz; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *QuizSubmissionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *QuizSubmissionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *QuizSubmissionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedquiz {
+		edges = append(edges, quizsubmission.EdgeQuiz)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *QuizSubmissionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case quizsubmission.EdgeQuiz:
+		return m.clearedquiz
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *QuizSubmissionMutation) ClearEdge(name string) error {
+	switch name {
+	case quizsubmission.EdgeQuiz:
+		m.ClearQuiz()
+		return nil
+	}
+	return fmt.Errorf("unknown QuizSubmission unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *QuizSubmissionMutation) ResetEdge(name string) error {
+	switch name {
+	case quizsubmission.EdgeQuiz:
+		m.ResetQuiz()
+		return nil
+	}
+	return fmt.Errorf("unknown QuizSubmission edge %s", name)
 }

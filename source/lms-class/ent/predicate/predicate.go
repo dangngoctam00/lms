@@ -17,3 +17,9 @@ type Question func(*sql.Selector)
 
 // QuestionHistory is the predicate function for questionhistory builders.
 type QuestionHistory func(*sql.Selector)
+
+// Quiz is the predicate function for quiz builders.
+type Quiz func(*sql.Selector)
+
+// QuizSubmission is the predicate function for quizsubmission builders.
+type QuizSubmission func(*sql.Selector)

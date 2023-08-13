@@ -26,7 +26,7 @@ const (
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
 	// Table holds the table name of the question in the database.
-	Table = "questions"
+	Table = "question"
 )
 
 // Columns holds all SQL columns for question fields.

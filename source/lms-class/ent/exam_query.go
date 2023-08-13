@@ -4,9 +4,11 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"lms-class/ent/exam"
 	"lms-class/ent/predicate"
+	"lms-class/ent/quiz"
 	"math"
 
 	"entgo.io/ent/dialect"
@@ -18,11 +20,12 @@ import (
 // ExamQuery is the builder for querying Exam entities.
 type ExamQuery struct {
 	config
-	ctx        *QueryContext
-	order      []exam.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Exam
-	modifiers  []func(*sql.Selector)
+	ctx         *QueryContext
+	order       []exam.OrderOption
+	inters      []Interceptor
+	predicates  []predicate.Exam
+	withQuizzes *QuizQuery
+	modifiers   []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +60,28 @@ func (eq *ExamQuery) Unique(unique bool) *ExamQuery {
 func (eq *ExamQuery) Order(o ...exam.OrderOption) *ExamQuery {
 	eq.order = append(eq.order, o...)
 	return eq
+}
+
+// QueryQuizzes chains the current query on the "quizzes" edge.
+func (eq *ExamQuery) QueryQuizzes() *QuizQuery {
+	query := (&QuizClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(exam.Table, exam.FieldID, selector),
+			sqlgraph.To(quiz.Table, quiz.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, exam.QuizzesTable, exam.QuizzesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Exam entity from the query.
@@ -246,15 +271,27 @@ func (eq *ExamQuery) Clone() *ExamQuery {
 		return nil
 	}
 	return &ExamQuery{
-		config:     eq.config,
-		ctx:        eq.ctx.Clone(),
-		order:      append([]exam.OrderOption{}, eq.order...),
-		inters:     append([]Interceptor{}, eq.inters...),
-		predicates: append([]predicate.Exam{}, eq.predicates...),
+		config:      eq.config,
+		ctx:         eq.ctx.Clone(),
+		order:       append([]exam.OrderOption{}, eq.order...),
+		inters:      append([]Interceptor{}, eq.inters...),
+		predicates:  append([]predicate.Exam{}, eq.predicates...),
+		withQuizzes: eq.withQuizzes.Clone(),
 		// clone intermediate query.
 		sql:  eq.sql.Clone(),
 		path: eq.path,
 	}
+}
+
+// WithQuizzes tells the query-builder to eager-load the nodes that are connected to
+// the "quizzes" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *ExamQuery) WithQuizzes(opts ...func(*QuizQuery)) *ExamQuery {
+	query := (&QuizClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withQuizzes = query
+	return eq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -333,8 +370,11 @@ func (eq *ExamQuery) prepareQuery(ctx context.Context) error {
 
 func (eq *ExamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Exam, error) {
 	var (
-		nodes = []*Exam{}
-		_spec = eq.querySpec()
+		nodes       = []*Exam{}
+		_spec       = eq.querySpec()
+		loadedTypes = [1]bool{
+			eq.withQuizzes != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Exam).scanValues(nil, columns)
@@ -342,6 +382,7 @@ func (eq *ExamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Exam, e
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Exam{config: eq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(eq.modifiers) > 0 {
@@ -356,7 +397,48 @@ func (eq *ExamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Exam, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := eq.withQuizzes; query != nil {
+		if err := eq.loadQuizzes(ctx, query, nodes,
+			func(n *Exam) { n.Edges.Quizzes = []*Quiz{} },
+			func(n *Exam, e *Quiz) { n.Edges.Quizzes = append(n.Edges.Quizzes, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (eq *ExamQuery) loadQuizzes(ctx context.Context, query *QuizQuery, nodes []*Exam, init func(*Exam), assign func(*Exam, *Quiz)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Exam)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(quiz.FieldExamId)
+	}
+	query.Where(predicate.Quiz(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(exam.QuizzesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ExamId
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "examId" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "examId" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (eq *ExamQuery) sqlCount(ctx context.Context) (int, error) {

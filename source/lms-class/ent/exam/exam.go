@@ -4,6 +4,7 @@ package exam
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -25,8 +26,17 @@ const (
 	FieldLastPublishedAt = "last_published_at"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeQuizzes holds the string denoting the quizzes edge name in mutations.
+	EdgeQuizzes = "quizzes"
 	// Table holds the table name of the exam in the database.
-	Table = "exams"
+	Table = "exam"
+	// QuizzesTable is the table that holds the quizzes relation/edge.
+	QuizzesTable = "quiz"
+	// QuizzesInverseTable is the table name for the Quiz entity.
+	// It exists in this package in order to avoid circular dependency with the "quiz" package.
+	QuizzesInverseTable = "quiz"
+	// QuizzesColumn is the table column denoting the quizzes relation/edge.
+	QuizzesColumn = "exam_id"
 )
 
 // Columns holds all SQL columns for exam fields.
@@ -92,4 +102,25 @@ func ByLastPublishedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updatedAt field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByQuizzesCount orders the results by quizzes count.
+func ByQuizzesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newQuizzesStep(), opts...)
+	}
+}
+
+// ByQuizzes orders the results by quizzes terms.
+func ByQuizzes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newQuizzesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newQuizzesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(QuizzesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, QuizzesTable, QuizzesColumn),
+	)
 }

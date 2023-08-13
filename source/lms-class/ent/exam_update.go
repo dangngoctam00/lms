@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"lms-class/ent/exam"
 	"lms-class/ent/predicate"
+	"lms-class/ent/quiz"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -84,9 +85,45 @@ func (eu *ExamUpdate) SetUpdatedAt(t time.Time) *ExamUpdate {
 	return eu
 }
 
+// AddQuizIDs adds the "quizzes" edge to the Quiz entity by IDs.
+func (eu *ExamUpdate) AddQuizIDs(ids ...int) *ExamUpdate {
+	eu.mutation.AddQuizIDs(ids...)
+	return eu
+}
+
+// AddQuizzes adds the "quizzes" edges to the Quiz entity.
+func (eu *ExamUpdate) AddQuizzes(q ...*Quiz) *ExamUpdate {
+	ids := make([]int, len(q))
+	for i := range q {
+		ids[i] = q[i].ID
+	}
+	return eu.AddQuizIDs(ids...)
+}
+
 // Mutation returns the ExamMutation object of the builder.
 func (eu *ExamUpdate) Mutation() *ExamMutation {
 	return eu.mutation
+}
+
+// ClearQuizzes clears all "quizzes" edges to the Quiz entity.
+func (eu *ExamUpdate) ClearQuizzes() *ExamUpdate {
+	eu.mutation.ClearQuizzes()
+	return eu
+}
+
+// RemoveQuizIDs removes the "quizzes" edge to Quiz entities by IDs.
+func (eu *ExamUpdate) RemoveQuizIDs(ids ...int) *ExamUpdate {
+	eu.mutation.RemoveQuizIDs(ids...)
+	return eu
+}
+
+// RemoveQuizzes removes "quizzes" edges to Quiz entities.
+func (eu *ExamUpdate) RemoveQuizzes(q ...*Quiz) *ExamUpdate {
+	ids := make([]int, len(q))
+	for i := range q {
+		ids[i] = q[i].ID
+	}
+	return eu.RemoveQuizIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -148,6 +185,51 @@ func (eu *ExamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := eu.mutation.UpdatedAt(); ok {
 		_spec.SetField(exam.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if eu.mutation.QuizzesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedQuizzesIDs(); len(nodes) > 0 && !eu.mutation.QuizzesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.QuizzesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -225,9 +307,45 @@ func (euo *ExamUpdateOne) SetUpdatedAt(t time.Time) *ExamUpdateOne {
 	return euo
 }
 
+// AddQuizIDs adds the "quizzes" edge to the Quiz entity by IDs.
+func (euo *ExamUpdateOne) AddQuizIDs(ids ...int) *ExamUpdateOne {
+	euo.mutation.AddQuizIDs(ids...)
+	return euo
+}
+
+// AddQuizzes adds the "quizzes" edges to the Quiz entity.
+func (euo *ExamUpdateOne) AddQuizzes(q ...*Quiz) *ExamUpdateOne {
+	ids := make([]int, len(q))
+	for i := range q {
+		ids[i] = q[i].ID
+	}
+	return euo.AddQuizIDs(ids...)
+}
+
 // Mutation returns the ExamMutation object of the builder.
 func (euo *ExamUpdateOne) Mutation() *ExamMutation {
 	return euo.mutation
+}
+
+// ClearQuizzes clears all "quizzes" edges to the Quiz entity.
+func (euo *ExamUpdateOne) ClearQuizzes() *ExamUpdateOne {
+	euo.mutation.ClearQuizzes()
+	return euo
+}
+
+// RemoveQuizIDs removes the "quizzes" edge to Quiz entities by IDs.
+func (euo *ExamUpdateOne) RemoveQuizIDs(ids ...int) *ExamUpdateOne {
+	euo.mutation.RemoveQuizIDs(ids...)
+	return euo
+}
+
+// RemoveQuizzes removes "quizzes" edges to Quiz entities.
+func (euo *ExamUpdateOne) RemoveQuizzes(q ...*Quiz) *ExamUpdateOne {
+	ids := make([]int, len(q))
+	for i := range q {
+		ids[i] = q[i].ID
+	}
+	return euo.RemoveQuizIDs(ids...)
 }
 
 // Where appends a list predicates to the ExamUpdate builder.
@@ -319,6 +437,51 @@ func (euo *ExamUpdateOne) sqlSave(ctx context.Context) (_node *Exam, err error) 
 	}
 	if value, ok := euo.mutation.UpdatedAt(); ok {
 		_spec.SetField(exam.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if euo.mutation.QuizzesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedQuizzesIDs(); len(nodes) > 0 && !euo.mutation.QuizzesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.QuizzesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   exam.QuizzesTable,
+			Columns: []string{exam.QuizzesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(quiz.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Exam{config: euo.config}
 	_spec.Assign = _node.assignValues

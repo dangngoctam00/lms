@@ -30,8 +30,29 @@ type Exam struct {
 	// LastPublishedAt holds the value of the "lastPublishedAt" field.
 	LastPublishedAt *time.Time `json:"lastPublishedAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt    time.Time `json:"updatedAt,omitempty"`
+	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ExamQuery when eager-loading is set.
+	Edges        ExamEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ExamEdges holds the relations/edges for other nodes in the graph.
+type ExamEdges struct {
+	// Quizzes holds the value of the quizzes edge.
+	Quizzes []*Quiz `json:"quizzes,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// QuizzesOrErr returns the Quizzes value or an error if the edge
+// was not loaded in eager-loading.
+func (e ExamEdges) QuizzesOrErr() ([]*Quiz, error) {
+	if e.loadedTypes[0] {
+		return e.Quizzes, nil
+	}
+	return nil, &NotLoadedError{edge: "quizzes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -122,6 +143,11 @@ func (e *Exam) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (e *Exam) Value(name string) (ent.Value, error) {
 	return e.selectValues.Get(name)
+}
+
+// QueryQuizzes queries the "quizzes" edge of the Exam entity.
+func (e *Exam) QueryQuizzes() *QuizQuery {
+	return NewExamClient(e.config).QueryQuizzes(e)
 }
 
 // Update returns a builder for updating this Exam.
