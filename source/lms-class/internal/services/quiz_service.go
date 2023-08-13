@@ -30,6 +30,33 @@ func GetQuizById(id int) (*ent.Quiz, error) {
 	return byId, err
 }
 
+func GetQuizSession(id int) (*dto.QuizSession, error) {
+	byId, err := queries.GetQuizSubmissionById(id)
+	if err != nil {
+		if _, ok := err.(*ent.NotFoundError); ok {
+			return nil, xerr.NewErrCodeAndInformation(xerr.ResourceNotFound, "quiz submission")
+		}
+		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
+	}
+	response := new(dto.QuizSession)
+	response.ID = byId.ID
+	//questions := byId.Questions
+	var questions []dto.QuestionQuizSession
+	if err = json.Unmarshal(byId.Questions, &questions); err != nil {
+		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
+	}
+	questionsSession := make([]dto.QuestionQuizSession, len(questions))
+	for i, q := range questions {
+		questionsSession[i].ID = q.ID
+		questionsSession[i].QuestionType = q.QuestionType
+		questionsSession[i].Position = q.Position
+		questionsSession[i].SetData(q.QuestionType, q.Data)
+	}
+	//answers := byId.Answers
+	// TODO
+	return nil, nil
+}
+
 func DoQuiz(id int) (*int, error) {
 	byId, err := GetQuizById(id)
 	if err != nil {

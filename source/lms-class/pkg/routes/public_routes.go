@@ -19,6 +19,7 @@ func PublicRoutes(a *fiber.App) {
 	route.Put("/questions/:id", controllers.UpdateQuestion)
 
 	route.Post("/quizzes", controllers.CreateQuiz)
-	route.Get("quizzes/:id", controllers.GetQuizById)
-	route.Post("quizzes/:id/do", controllers.DoQuiz)
+	route.Get("/quizzes/:id", controllers.GetQuizById)
+	route.Post("/quizzes/:id/do", controllers.DoQuiz)
+	route.Get("/quizzes/sessions/:id", controllers.GetQuizSessionById)
 }

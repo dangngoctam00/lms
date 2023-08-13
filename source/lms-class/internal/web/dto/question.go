@@ -8,6 +8,7 @@ import (
 )
 
 type Order int
+type Key string
 
 type QuestionDto struct {
 	ID           int            `json:"id,omitempty"`
@@ -50,6 +51,11 @@ type WritingQuestion struct {
 	QuestionData
 }
 
+type WritingQuestionSession struct {
+	WritingQuestion
+	Answer string `json:"answer"`
+}
+
 func (*WritingQuestion) Shuffle() {
 	// Do nothing
 }
@@ -58,6 +64,11 @@ type MultiChoiceQuestion struct {
 	QuestionData
 	IsMultipleAnswer bool                `json:"isMultipleAnswer"`
 	Options          []MultiChoiceOption `json:"options"`
+}
+
+type MultiChoiceQuestionSession struct {
+	MultiChoiceQuestion
+	Answer Key `json:"answer"`
 }
 
 func (q *MultiChoiceQuestion) Shuffle() {
@@ -73,6 +84,11 @@ func (q *MultiChoiceQuestion) Shuffle() {
 type BlankMultiChoiceQuestion struct {
 	QuestionData
 	Blanks []BlankMultiChoice `json:"blanks"`
+}
+
+type BlankMultiChoiceQuestionSession struct {
+	QuestionData
+	Blanks []BlankMultiChoiceQuestionSession `json:"blanks"`
 }
 
 func (q *BlankMultiChoiceQuestion) Shuffle() {
@@ -93,6 +109,11 @@ type FillInBlankQuestion struct {
 	Blanks []Blank `json:"blanks"`
 }
 
+type FillInBlankQuestionSession struct {
+	QuestionData
+	Blanks []BlankSession `json:"blanks"`
+}
+
 func (*FillInBlankQuestion) Shuffle() {
 	// Do nothing
 }
@@ -103,13 +124,25 @@ type DragAndDropQuestion struct {
 	Answers []AnswerDragAndDrop `json:"answers"`
 }
 
+type DragAndDropQuestionSession struct {
+	QuestionData
+	Blanks  []BlankDragAndDropSession `json:"blanks"`
+	Answers []AnswerDragAndDrop       `json:"answers"`
+}
+
 func (*DragAndDropQuestion) Shuffle() {
 	// Do nothing
 }
 
 type BlankDragAndDrop struct {
+	AnswerKey Key   `json:"answerKey"`
+	Order     Order `json:"order"`
+}
+
+type BlankDragAndDropSession struct {
 	AnswerKey string `json:"answerKey"`
 	Order     Order  `json:"order"`
+	Answer    Key    `json:"answer"`
 }
 
 type AnswerDragAndDrop struct {
@@ -124,10 +157,22 @@ type Blank struct {
 	Order          Order  `json:"order"`
 }
 
+type BlankSession struct {
+	Blank
+	Answer string `json:"answer,omitempty"`
+}
+
 type BlankMultiChoice struct {
 	CorrectAnswerKey string        `json:"correctAnswerKey"`
 	Options          []BlankOption `json:"options"`
 	Order            Order         `json:"order"`
+}
+
+type BlankMultiChoiceSession struct {
+	CorrectAnswerKey Key           `json:"correctAnswerKey"`
+	Options          []BlankOption `json:"options"`
+	Order            Order         `json:"order"`
+	Answer           Key           `json:"answer"`
 }
 
 type BlankOption struct {
@@ -137,7 +182,7 @@ type BlankOption struct {
 }
 
 type MultiChoiceOption struct {
-	Key       string `json:"key"`
+	Key       Key    `json:"key"`
 	Content   string `json:"content"`
 	IsCorrect bool   `json:"isCorrect"`
 	Order     Order  `json:"order"`
@@ -165,6 +210,48 @@ type Question ent.Question
 
 func (s *QuestionDto) SetData(source ent.Question) {
 	s.DoSetData(source.QuestionType, source.Data)
+}
+
+func (s *QuestionQuizSession) SetData(questionType string, questionData interface{}) {
+	switch questionType {
+	case Writing:
+		question, ok := questionData.(WritingQuestion)
+		if ok {
+			t := &WritingQuestionSession{
+				WritingQuestion: question,
+				Answer:          "",
+			}
+			s.Data = t
+		}
+		//case MultiChoice:
+		//	question, ok := questionData.(MultiChoiceQuestion)
+		//	err := json.Unmarshal(questionData, res)
+		//	if err != nil {
+		//		//return nil
+		//	}
+		//	s.Data = res
+		//case FillInBlank:
+		//	res := &FillInBlankQuestion{}
+		//	err := json.Unmarshal(questionData, res)
+		//	if err != nil {
+		//		//return nil
+		//	}
+		//	s.Data = res
+		//case BlankWithMultiChoice:
+		//	res := &BlankMultiChoiceQuestion{}
+		//	err := json.Unmarshal(questionData, res)
+		//	if err != nil {
+		//		//return nil
+		//	}
+		//	s.Data = res
+		//case DragAndDrop:
+		//	res := &DragAndDropQuestion{}
+		//	err := json.Unmarshal(questionData, res)
+		//	if err != nil {
+		//		//return nil
+		//	}
+		//	s.Data = res
+	}
 }
 
 func (s *QuestionDto) DoSetData(questionType string, questionData json.RawMessage) {

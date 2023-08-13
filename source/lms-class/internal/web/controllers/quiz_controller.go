@@ -27,6 +27,15 @@ func GetQuizById(c *fiber.Ctx) error {
 	return result.HttpResult(c, byId, err)
 }
 
+func GetQuizSessionById(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return result.ParamErrorResult(c, err)
+	}
+	byId, err := services.GetQuizSession(id)
+	return result.HttpResult(c, byId, err)
+}
+
 func DoQuiz(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {

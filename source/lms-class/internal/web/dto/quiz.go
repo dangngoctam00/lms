@@ -26,6 +26,14 @@ type QuizDto struct {
 	FinalGradedStrategy      *string    `json:"finalGradedStrategy,omitempty"`
 }
 
+type QuizSession struct {
+	ID        int                   `json:"id,omitempty"`
+	HasGraded bool                  `json:"hasGraded,omitempty"`
+	HasActive bool                  `json:"hasActive,omitempty"`
+	Score     int                   `json:"score,omitempty"`
+	Questions []QuestionQuizSession `json:"questions"`
+}
+
 func (q *QuizDto) WithId(id *int) {
 	if id == nil {
 		return
