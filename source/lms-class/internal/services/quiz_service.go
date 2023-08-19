@@ -40,29 +40,58 @@ func GetQuizSession(id int) (*dto.QuizSession, error) {
 	}
 	response := new(dto.QuizSession)
 	response.ID = byId.ID
-	//questions := byId.Questions
 	var questions []dto.QuestionQuizSession
 	if err = json.Unmarshal(byId.Questions, &questions); err != nil {
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 	}
-	questionsSession := make([]dto.QuestionQuizSession, len(questions))
 	for i, q := range questions {
-		questionsSession[i].ID = q.ID
-		questionsSession[i].QuestionType = q.QuestionType
-		questionsSession[i].Position = q.Position
-		questionsSession[i].SetData(q.QuestionType, q.Data)
+		questions[i].ID = q.ID
+		questions[i].QuestionType = q.QuestionType
+		questions[i].Position = q.Position
+		questions[i].SetData(q.QuestionType, q.Data)
+		questions[i].Answers = byId.Answers[q.ID]
 	}
-	//answers := byId.Answers
-	// TODO
-	return nil, nil
+	response.Questions = questions
+	return response, nil
+}
+
+func AnswerQuestionById(sessionId, questionId int, answer []dto.Key) (*int, error) {
+	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
+		session, err := queries.GetQuizSubmissionByIdOnUpdate(tx, sessionId)
+		if err != nil {
+			if _, ok := err.(*ent.NotFoundError); ok {
+				return nil, xerr.NewErrCodeAndInformation(xerr.ResourceNotFound, "quiz submission")
+			}
+			return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
+		}
+		quiz := session.Edges.Quiz
+		if session.StartedAt.Add(time.Duration(*quiz.TimeLimit * int(time.Minute))).Before(time.Now()) {
+			return nil, xerr.NewErrCodeAndInformation(xerr.QuizSessionClosed)
+		}
+		answers := session.Answers
+		if answers == nil {
+			answers = make(map[int][]dto.Key)
+		}
+		answers[questionId] = answer
+		_, err = session.Update().
+			SetAnswers(answers).
+			Save(context.Background())
+		if err != nil {
+			return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
+		}
+		return &questionId, nil
+	})
 }
 
 func DoQuiz(id int) (*int, error) {
-	byId, err := GetQuizById(id)
+	quizEntity, err := GetQuizById(id)
 	if err != nil {
 		return nil, err
 	}
-	examId := byId.ExamId
+	if validateDoQuiz(quizEntity) == false {
+		return nil, xerr.NewErrCodeAndInformation(xerr.QuizNotConfigured)
+	}
+	examId := quizEntity.ExamId
 	exam, err := GetPublishedExam(*examId)
 	if err != nil {
 		return nil, err
@@ -79,6 +108,13 @@ func DoQuiz(id int) (*int, error) {
 			Save(context.Background())
 		return &save.ID, err
 	})
+}
+
+func validateDoQuiz(quiz *ent.Quiz) bool {
+	return quiz.IsPublished == true &&
+		quiz.ExamId != nil &&
+		quiz.StartedAt != nil &&
+		quiz.TimeLimit != nil
 }
 
 func shuffleQuestions(exam *dto.ExamDto) []dto.QuestionQuizSession {

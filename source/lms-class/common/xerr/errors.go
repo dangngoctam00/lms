@@ -30,7 +30,10 @@ func NewErrCode(errCode uint32) *CodeError {
 }
 
 func NewErrCodeAndInformation(errCode uint32, placeholders ...string) *CodeError {
-	return &CodeError{errCode: errCode, errMsg: fmt.Sprintf(MapErrMsg(errCode), placeholders)}
+	if placeholders != nil {
+		return &CodeError{errCode: errCode, errMsg: fmt.Sprintf(MapErrMsg(errCode), placeholders)}
+	}
+	return &CodeError{errCode: errCode, errMsg: MapErrMsg(errCode)}
 }
 
 func NewErrMsg(errMsg string) *CodeError {

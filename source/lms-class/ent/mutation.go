@@ -14,6 +14,7 @@ import (
 	"lms-class/ent/questionhistory"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
+	"lms-class/internal/web/dto"
 	"sync"
 	"time"
 
@@ -5416,8 +5417,7 @@ type QuizSubmissionMutation struct {
 	submittedAt     *time.Time
 	questions       *json.RawMessage
 	appendquestions json.RawMessage
-	answers         *json.RawMessage
-	appendanswers   json.RawMessage
+	answers         *map[int][]dto.Key
 	score           *int
 	addscore        *int
 	clearedFields   map[string]struct{}
@@ -5755,13 +5755,12 @@ func (m *QuizSubmissionMutation) ResetQuestions() {
 }
 
 // SetAnswers sets the "answers" field.
-func (m *QuizSubmissionMutation) SetAnswers(jm json.RawMessage) {
-	m.answers = &jm
-	m.appendanswers = nil
+func (m *QuizSubmissionMutation) SetAnswers(value map[int][]dto.Key) {
+	m.answers = &value
 }
 
 // Answers returns the value of the "answers" field in the mutation.
-func (m *QuizSubmissionMutation) Answers() (r json.RawMessage, exists bool) {
+func (m *QuizSubmissionMutation) Answers() (r map[int][]dto.Key, exists bool) {
 	v := m.answers
 	if v == nil {
 		return
@@ -5772,7 +5771,7 @@ func (m *QuizSubmissionMutation) Answers() (r json.RawMessage, exists bool) {
 // OldAnswers returns the old "answers" field's value of the QuizSubmission entity.
 // If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v json.RawMessage, err error) {
+func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v map[int][]dto.Key, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAnswers is only allowed on UpdateOne operations")
 	}
@@ -5786,23 +5785,9 @@ func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v json.RawMess
 	return oldValue.Answers, nil
 }
 
-// AppendAnswers adds jm to the "answers" field.
-func (m *QuizSubmissionMutation) AppendAnswers(jm json.RawMessage) {
-	m.appendanswers = append(m.appendanswers, jm...)
-}
-
-// AppendedAnswers returns the list of values that were appended to the "answers" field in this mutation.
-func (m *QuizSubmissionMutation) AppendedAnswers() (json.RawMessage, bool) {
-	if len(m.appendanswers) == 0 {
-		return nil, false
-	}
-	return m.appendanswers, true
-}
-
 // ClearAnswers clears the value of the "answers" field.
 func (m *QuizSubmissionMutation) ClearAnswers() {
 	m.answers = nil
-	m.appendanswers = nil
 	m.clearedFields[quizsubmission.FieldAnswers] = struct{}{}
 }
 
@@ -5815,7 +5800,6 @@ func (m *QuizSubmissionMutation) AnswersCleared() bool {
 // ResetAnswers resets all changes to the "answers" field.
 func (m *QuizSubmissionMutation) ResetAnswers() {
 	m.answers = nil
-	m.appendanswers = nil
 	delete(m.clearedFields, quizsubmission.FieldAnswers)
 }
 
@@ -6075,7 +6059,7 @@ func (m *QuizSubmissionMutation) SetField(name string, value ent.Value) error {
 		m.SetQuestions(v)
 		return nil
 	case quizsubmission.FieldAnswers:
-		v, ok := value.(json.RawMessage)
+		v, ok := value.(map[int][]dto.Key)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

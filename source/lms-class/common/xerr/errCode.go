@@ -9,3 +9,7 @@ const TokenGenerateError uint32 = 100004
 const DbError uint32 = 100005
 const DbUpdateAffectedZeroError uint32 = 100006
 const ResourceNotFound uint32 = 100007
+
+// --
+const QuizNotConfigured uint32 = 200001
+const QuizSessionClosed uint32 = 200002

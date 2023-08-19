@@ -2,13 +2,16 @@ package dto
 
 import (
 	"encoding/json"
-	"lms-class/ent"
 	"math/rand"
 	"time"
 )
 
 type Order int
 type Key string
+
+type AnswerQuestion struct {
+	Answers []Key `json:"answers"`
+}
 
 type QuestionDto struct {
 	ID           int            `json:"id,omitempty"`
@@ -26,6 +29,7 @@ type QuestionQuizSession struct {
 	Position     int         `json:"position,omitempty"`
 	QuestionType string      `json:"questionType,omitempty"`
 	Data         interface{} `json:"data,omitempty" mapper:"-"`
+	Answers      []Key       `json:"answers"`
 }
 
 func NewQuestionQuizSession(dto QuestionDto) *QuestionQuizSession {
@@ -53,7 +57,7 @@ type WritingQuestion struct {
 
 type WritingQuestionSession struct {
 	WritingQuestion
-	Answer string `json:"answer"`
+	Answers []Key `json:"answers"`
 }
 
 func (*WritingQuestion) Shuffle() {
@@ -68,7 +72,7 @@ type MultiChoiceQuestion struct {
 
 type MultiChoiceQuestionSession struct {
 	MultiChoiceQuestion
-	Answer Key `json:"answer"`
+	Answers []Key `json:"answers"`
 }
 
 func (q *MultiChoiceQuestion) Shuffle() {
@@ -87,8 +91,8 @@ type BlankMultiChoiceQuestion struct {
 }
 
 type BlankMultiChoiceQuestionSession struct {
-	QuestionData
-	Blanks []BlankMultiChoiceQuestionSession `json:"blanks"`
+	BlankMultiChoiceQuestion
+	Answers []Key `json:"answers"`
 }
 
 func (q *BlankMultiChoiceQuestion) Shuffle() {
@@ -110,8 +114,8 @@ type FillInBlankQuestion struct {
 }
 
 type FillInBlankQuestionSession struct {
-	QuestionData
-	Blanks []BlankSession `json:"blanks"`
+	FillInBlankQuestion
+	Answers []Key `json:"answers"`
 }
 
 func (*FillInBlankQuestion) Shuffle() {
@@ -120,14 +124,13 @@ func (*FillInBlankQuestion) Shuffle() {
 
 type DragAndDropQuestion struct {
 	QuestionData
-	Blanks  []BlankDragAndDrop  `json:"blanks"`
-	Answers []AnswerDragAndDrop `json:"answers"`
+	Blanks     []BlankDragAndDrop  `json:"blanks"`
+	Candidates []AnswerDragAndDrop `json:"candidates"`
 }
 
 type DragAndDropQuestionSession struct {
-	QuestionData
-	Blanks  []BlankDragAndDropSession `json:"blanks"`
-	Answers []AnswerDragAndDrop       `json:"answers"`
+	DragAndDropQuestion
+	Answers []Key `json:"answers"`
 }
 
 func (*DragAndDropQuestion) Shuffle() {
@@ -137,12 +140,6 @@ func (*DragAndDropQuestion) Shuffle() {
 type BlankDragAndDrop struct {
 	AnswerKey Key   `json:"answerKey"`
 	Order     Order `json:"order"`
-}
-
-type BlankDragAndDropSession struct {
-	AnswerKey string `json:"answerKey"`
-	Order     Order  `json:"order"`
-	Answer    Key    `json:"answer"`
 }
 
 type AnswerDragAndDrop struct {
@@ -157,22 +154,10 @@ type Blank struct {
 	Order          Order  `json:"order"`
 }
 
-type BlankSession struct {
-	Blank
-	Answer string `json:"answer,omitempty"`
-}
-
 type BlankMultiChoice struct {
 	CorrectAnswerKey string        `json:"correctAnswerKey"`
 	Options          []BlankOption `json:"options"`
 	Order            Order         `json:"order"`
-}
-
-type BlankMultiChoiceSession struct {
-	CorrectAnswerKey Key           `json:"correctAnswerKey"`
-	Options          []BlankOption `json:"options"`
-	Order            Order         `json:"order"`
-	Answer           Key           `json:"answer"`
 }
 
 type BlankOption struct {
@@ -193,6 +178,17 @@ type Attachment struct {
 	ContentType string `json:"contentType"`
 }
 
+type Answer struct {
+	QuestionId int    `json:"questionId"`
+	Type       string `json:"type"`
+	Values     []Key  `json:"values"`
+}
+
+type BlankDragAndDropAnswer struct {
+	Answer
+	Answers []string `json:"answers"`
+}
+
 const (
 	Writing              = "WRITING"
 	MultiChoice          = "MULTI_CHOICE"
@@ -206,10 +202,19 @@ const (
 	Course = "COURSE"
 )
 
-type Question ent.Question
+type Question struct {
+	ID           int             `json:"id,omitempty"`
+	Context      string          `json:"context,omitempty"`
+	ContextId    int             `json:"contextId,omitempty"`
+	Position     int             `json:"position,omitempty"`
+	QuestionType string          `json:"questionType,omitempty"`
+	Data         json.RawMessage `json:"data,omitempty"`
+	UpdatedAt    time.Time       `json:"updatedAt,omitempty"`
+	Version      int64           `json:"version,omitempty"`
+}
 
-func (s *QuestionDto) SetData(source ent.Question) {
-	s.DoSetData(source.QuestionType, source.Data)
+func (s *QuestionDto) SetData(questionType string, data json.RawMessage) {
+	s.DoSetData(questionType, data)
 }
 
 func (s *QuestionQuizSession) SetData(questionType string, questionData interface{}) {
@@ -219,38 +224,46 @@ func (s *QuestionQuizSession) SetData(questionType string, questionData interfac
 		if ok {
 			t := &WritingQuestionSession{
 				WritingQuestion: question,
-				Answer:          "",
+				Answers:         []Key{""},
 			}
 			s.Data = t
 		}
-		//case MultiChoice:
-		//	question, ok := questionData.(MultiChoiceQuestion)
-		//	err := json.Unmarshal(questionData, res)
-		//	if err != nil {
-		//		//return nil
-		//	}
-		//	s.Data = res
-		//case FillInBlank:
-		//	res := &FillInBlankQuestion{}
-		//	err := json.Unmarshal(questionData, res)
-		//	if err != nil {
-		//		//return nil
-		//	}
-		//	s.Data = res
-		//case BlankWithMultiChoice:
-		//	res := &BlankMultiChoiceQuestion{}
-		//	err := json.Unmarshal(questionData, res)
-		//	if err != nil {
-		//		//return nil
-		//	}
-		//	s.Data = res
-		//case DragAndDrop:
-		//	res := &DragAndDropQuestion{}
-		//	err := json.Unmarshal(questionData, res)
-		//	if err != nil {
-		//		//return nil
-		//	}
-		//	s.Data = res
+	case MultiChoice:
+		question, ok := questionData.(MultiChoiceQuestion)
+		if ok {
+			t := &MultiChoiceQuestionSession{
+				MultiChoiceQuestion: question,
+				Answers:             []Key{""},
+			}
+			s.Data = t
+		}
+	case FillInBlank:
+		question, ok := questionData.(FillInBlankQuestion)
+		if ok {
+			t := &FillInBlankQuestionSession{
+				FillInBlankQuestion: question,
+				Answers:             []Key{""},
+			}
+			s.Data = t
+		}
+	case BlankWithMultiChoice:
+		question, ok := questionData.(BlankMultiChoiceQuestion)
+		if ok {
+			t := &BlankMultiChoiceQuestionSession{
+				BlankMultiChoiceQuestion: question,
+				Answers:                  []Key{""},
+			}
+			s.Data = t
+		}
+	case DragAndDrop:
+		question, ok := questionData.(DragAndDropQuestion)
+		if ok {
+			t := &DragAndDropQuestionSession{
+				DragAndDropQuestion: question,
+				Answers:             []Key{""},
+			}
+			s.Data = t
+		}
 	}
 }
 

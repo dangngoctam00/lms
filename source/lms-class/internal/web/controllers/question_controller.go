@@ -52,7 +52,7 @@ func GetQuestionById(c *fiber.Ctx) error {
 		return result.HttpResult(c, nil, err)
 	}
 	questionDto := dto.QuestionDto{}
-	questionDto.SetData(*question)
+	questionDto.SetData(question.QuestionType, question.Data)
 
 	mapper.SetEnableFieldIgnoreTag(true)
 	if err = mapper.AutoMapper(question, &questionDto); err != nil {

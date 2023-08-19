@@ -22,4 +22,5 @@ func PublicRoutes(a *fiber.App) {
 	route.Get("/quizzes/:id", controllers.GetQuizById)
 	route.Post("/quizzes/:id/do", controllers.DoQuiz)
 	route.Get("/quizzes/sessions/:id", controllers.GetQuizSessionById)
+	route.Post("/quizzes/sessions/:sessionId/questions/:questionId", controllers.AnswerQuestionById)
 }

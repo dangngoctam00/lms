@@ -111,7 +111,7 @@ func GetQuestionsByExam(examId int) ([]dto.QuestionDto, error) {
 
 func mapQuestion(v *ent.Question) (*dto.QuestionDto, error) {
 	questionDto := &dto.QuestionDto{}
-	questionDto.SetData(*v)
+	questionDto.SetData(v.QuestionType, v.Data)
 	mapper.SetEnableFieldIgnoreTag(true)
 	if err := mapper.AutoMapper(v, questionDto); err != nil {
 		return nil, errors.New("unexpected error while mapping")

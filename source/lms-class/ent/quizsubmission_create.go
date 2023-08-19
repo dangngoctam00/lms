@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
+	"lms-class/internal/web/dto"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -61,8 +62,8 @@ func (qsc *QuizSubmissionCreate) SetQuestions(jm json.RawMessage) *QuizSubmissio
 }
 
 // SetAnswers sets the "answers" field.
-func (qsc *QuizSubmissionCreate) SetAnswers(jm json.RawMessage) *QuizSubmissionCreate {
-	qsc.mutation.SetAnswers(jm)
+func (qsc *QuizSubmissionCreate) SetAnswers(m map[int][]dto.Key) *QuizSubmissionCreate {
+	qsc.mutation.SetAnswers(m)
 	return qsc
 }
 

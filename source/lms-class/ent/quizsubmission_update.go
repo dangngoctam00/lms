@@ -10,6 +10,7 @@ import (
 	"lms-class/ent/predicate"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
+	"lms-class/internal/web/dto"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -89,14 +90,8 @@ func (qsu *QuizSubmissionUpdate) AppendQuestions(jm json.RawMessage) *QuizSubmis
 }
 
 // SetAnswers sets the "answers" field.
-func (qsu *QuizSubmissionUpdate) SetAnswers(jm json.RawMessage) *QuizSubmissionUpdate {
-	qsu.mutation.SetAnswers(jm)
-	return qsu
-}
-
-// AppendAnswers appends jm to the "answers" field.
-func (qsu *QuizSubmissionUpdate) AppendAnswers(jm json.RawMessage) *QuizSubmissionUpdate {
-	qsu.mutation.AppendAnswers(jm)
+func (qsu *QuizSubmissionUpdate) SetAnswers(m map[int][]dto.Key) *QuizSubmissionUpdate {
+	qsu.mutation.SetAnswers(m)
 	return qsu
 }
 
@@ -228,11 +223,6 @@ func (qsu *QuizSubmissionUpdate) sqlSave(ctx context.Context) (n int, err error)
 	if value, ok := qsu.mutation.Answers(); ok {
 		_spec.SetField(quizsubmission.FieldAnswers, field.TypeJSON, value)
 	}
-	if value, ok := qsu.mutation.AppendedAnswers(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, quizsubmission.FieldAnswers, value)
-		})
-	}
 	if qsu.mutation.AnswersCleared() {
 		_spec.ClearField(quizsubmission.FieldAnswers, field.TypeJSON)
 	}
@@ -352,14 +342,8 @@ func (qsuo *QuizSubmissionUpdateOne) AppendQuestions(jm json.RawMessage) *QuizSu
 }
 
 // SetAnswers sets the "answers" field.
-func (qsuo *QuizSubmissionUpdateOne) SetAnswers(jm json.RawMessage) *QuizSubmissionUpdateOne {
-	qsuo.mutation.SetAnswers(jm)
-	return qsuo
-}
-
-// AppendAnswers appends jm to the "answers" field.
-func (qsuo *QuizSubmissionUpdateOne) AppendAnswers(jm json.RawMessage) *QuizSubmissionUpdateOne {
-	qsuo.mutation.AppendAnswers(jm)
+func (qsuo *QuizSubmissionUpdateOne) SetAnswers(m map[int][]dto.Key) *QuizSubmissionUpdateOne {
+	qsuo.mutation.SetAnswers(m)
 	return qsuo
 }
 
@@ -520,11 +504,6 @@ func (qsuo *QuizSubmissionUpdateOne) sqlSave(ctx context.Context) (_node *QuizSu
 	}
 	if value, ok := qsuo.mutation.Answers(); ok {
 		_spec.SetField(quizsubmission.FieldAnswers, field.TypeJSON, value)
-	}
-	if value, ok := qsuo.mutation.AppendedAnswers(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, quizsubmission.FieldAnswers, value)
-		})
 	}
 	if qsuo.mutation.AnswersCleared() {
 		_spec.ClearField(quizsubmission.FieldAnswers, field.TypeJSON)

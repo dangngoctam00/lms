@@ -21,3 +21,11 @@ func GetQuizSubmissionById(id int) (*ent.QuizSubmission, error) {
 		Where(quizsubmission.ID(id)).
 		Only(context.Background())
 }
+
+func GetQuizSubmissionByIdOnUpdate(tx *ent.Tx, id int) (*ent.QuizSubmission, error) {
+	return tx.QuizSubmission.Query().
+		WithQuiz().
+		Where(quizsubmission.ID(id)).
+		ForUpdate().
+		Only(context.Background())
+}

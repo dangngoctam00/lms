@@ -9,6 +9,9 @@ func init() {
 	message[RequestParamError] = "request param is not correct"
 	message[DbError] = "the database is not working now, please try again later"
 	message[ResourceNotFound] = "requested %s is not found"
+
+	message[QuizSessionClosed] = "Quiz session has been closed"
+	message[QuizNotConfigured] = "Quiz has not been configured"
 }
 
 func MapErrMsg(errCode uint32) string {

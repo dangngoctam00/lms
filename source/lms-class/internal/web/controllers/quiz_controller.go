@@ -36,6 +36,23 @@ func GetQuizSessionById(c *fiber.Ctx) error {
 	return result.HttpResult(c, byId, err)
 }
 
+func AnswerQuestionById(c *fiber.Ctx) error {
+	sessionId, err := c.ParamsInt("sessionId")
+	if err != nil {
+		return result.ParamErrorResult(c, err)
+	}
+	questionId, err := c.ParamsInt("questionId")
+	if err != nil {
+		return result.ParamErrorResult(c, err)
+	}
+	answers := &dto.AnswerQuestion{}
+	if err := c.BodyParser(answers); err != nil {
+		return result.ParamErrorResult(c, err)
+	}
+	id, err := services.AnswerQuestionById(sessionId, questionId, answers.Answers)
+	return result.HttpResult(c, id, err)
+}
+
 func DoQuiz(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
