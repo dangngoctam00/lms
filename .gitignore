@@ -39,3 +39,4 @@ build/
 ### Mac OS ###
 .DS_Store
 /.idea/sonarlint/
+source/lms-class/etc/data/
