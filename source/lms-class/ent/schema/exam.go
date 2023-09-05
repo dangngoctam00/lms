@@ -38,3 +38,10 @@ func (Exam) Annotations() []schema.Annotation {
 		entsql.Annotation{Table: "exam"},
 	}
 }
+
+// TODO
+//func (Exam) Mixin() []ent.Mixin {
+//	return []ent.Mixin{
+//		HasTenant{},
+//	}
+//}

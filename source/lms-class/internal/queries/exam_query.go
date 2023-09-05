@@ -2,14 +2,22 @@ package queries
 
 import (
 	"context"
+	"entgo.io/ent/dialect/sql"
 	"lms-class/ent"
 	"lms-class/ent/exam"
 	"lms-class/ent/examhistory"
+	"lms-class/pkg"
 	"lms-class/pkg/utils"
 )
 
 func GetPublishedExam(id int) (*ent.ExamHistory, error) {
-	latest, err := utils.EntClient.ExamHistory.Query().Where(examhistory.Ref(id), examhistory.HavingDraft(false)).Latest(context.Background())
+	latest, err := utils.EntClient.ExamHistory.Query().
+		Where(func(s *sql.Selector) {
+			t := sql.Table(examhistory.Table)
+			t.Schema(pkg.GetTenant())
+			s.From(t).Select().Where(sql.EQ(t.C(examhistory.FieldRef), id)).
+				Where(sql.IsFalse(t.C(examhistory.FieldHavingDraft)))
+		}).Latest(context.Background())
 	return latest, err
 }
 
