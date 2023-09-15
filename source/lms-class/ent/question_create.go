@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -107,7 +107,7 @@ func (qc *QuestionCreate) ExecX(ctx context.Context) {
 // defaults sets the default values of the builder before save.
 func (qc *QuestionCreate) defaults() {
 	if _, ok := qc.mutation.Version(); !ok {
-		v := question.DefaultVersion()
+		v := entquestion.DefaultVersion()
 		qc.mutation.SetVersion(v)
 	}
 }
@@ -159,34 +159,34 @@ func (qc *QuestionCreate) sqlSave(ctx context.Context) (*Question, error) {
 func (qc *QuestionCreate) createSpec() (*Question, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Question{config: qc.config}
-		_spec = sqlgraph.NewCreateSpec(question.Table, sqlgraph.NewFieldSpec(question.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(entquestion.Table, sqlgraph.NewFieldSpec(entquestion.FieldID, field.TypeInt))
 	)
 	if value, ok := qc.mutation.Context(); ok {
-		_spec.SetField(question.FieldContext, field.TypeString, value)
+		_spec.SetField(entquestion.FieldContext, field.TypeString, value)
 		_node.Context = value
 	}
 	if value, ok := qc.mutation.ContextId(); ok {
-		_spec.SetField(question.FieldContextId, field.TypeInt, value)
+		_spec.SetField(entquestion.FieldContextId, field.TypeInt, value)
 		_node.ContextId = value
 	}
 	if value, ok := qc.mutation.Position(); ok {
-		_spec.SetField(question.FieldPosition, field.TypeInt, value)
+		_spec.SetField(entquestion.FieldPosition, field.TypeInt, value)
 		_node.Position = value
 	}
 	if value, ok := qc.mutation.QuestionType(); ok {
-		_spec.SetField(question.FieldQuestionType, field.TypeString, value)
+		_spec.SetField(entquestion.FieldQuestionType, field.TypeString, value)
 		_node.QuestionType = value
 	}
 	if value, ok := qc.mutation.Data(); ok {
-		_spec.SetField(question.FieldData, field.TypeJSON, value)
+		_spec.SetField(entquestion.FieldData, field.TypeJSON, value)
 		_node.Data = value
 	}
 	if value, ok := qc.mutation.UpdatedAt(); ok {
-		_spec.SetField(question.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(entquestion.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := qc.mutation.Version(); ok {
-		_spec.SetField(question.FieldVersion, field.TypeInt64, value)
+		_spec.SetField(entquestion.FieldVersion, field.TypeInt64, value)
 		_node.Version = value
 	}
 	return _node, _spec

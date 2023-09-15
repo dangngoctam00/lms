@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"lms-class/common/result"
 	"lms-class/internal/services"
-	"lms-class/internal/web/dto"
+	"lms-class/internal/web/dto/exam"
 )
 
 func GetExamById(c *fiber.Ctx) error {
@@ -26,7 +26,7 @@ func GetPublishedExamById(c *fiber.Ctx) error {
 }
 
 func CreateExam(c *fiber.Ctx) error {
-	exam := &dto.ExamDto{}
+	exam := &exam.ExamDto{}
 	if err := c.BodyParser(exam); err != nil {
 		return result.ParamErrorResult(c, err)
 	}
@@ -39,7 +39,7 @@ func UpdateExam(c *fiber.Ctx) error {
 	if err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	exam := &dto.ExamDto{}
+	exam := &exam.ExamDto{}
 	if err := c.BodyParser(exam); err != nil {
 		return result.ParamErrorResult(c, err)
 	}

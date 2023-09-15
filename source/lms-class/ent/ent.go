@@ -8,16 +8,17 @@ import (
 	"fmt"
 	"lms-class/ent/exam"
 	"lms-class/ent/examhistory"
-	"lms-class/ent/question"
-	"lms-class/ent/questionhistory"
-	"lms-class/ent/quiz"
-	"lms-class/ent/quizsubmission"
 	"reflect"
 	"sync"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+
+	entquestion "lms-class/ent/question"
+	"lms-class/ent/questionhistory"
+	"lms-class/ent/quiz"
+	"lms-class/ent/quizsubmission"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -80,7 +81,7 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			exam.Table:            exam.ValidColumn,
 			examhistory.Table:     examhistory.ValidColumn,
-			question.Table:        question.ValidColumn,
+			entquestion.Table:     entquestion.ValidColumn,
 			questionhistory.Table: questionhistory.ValidColumn,
 			quiz.Table:            quiz.ValidColumn,
 			quizsubmission.Table:  quizsubmission.ValidColumn,

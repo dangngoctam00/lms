@@ -9,7 +9,7 @@ import (
 	"lms-class/ent/exam"
 	"lms-class/ent/examhistory"
 	"lms-class/ent/predicate"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"lms-class/ent/questionhistory"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
@@ -243,7 +243,7 @@ func NewQuery(q ent.Query) (Query, error) {
 	case *ent.ExamHistoryQuery:
 		return &query[*ent.ExamHistoryQuery, predicate.ExamHistory, examhistory.OrderOption]{typ: ent.TypeExamHistory, tq: q}, nil
 	case *ent.QuestionQuery:
-		return &query[*ent.QuestionQuery, predicate.Question, question.OrderOption]{typ: ent.TypeQuestion, tq: q}, nil
+		return &query[*ent.QuestionQuery, predicate.Question, entquestion.OrderOption]{typ: ent.TypeQuestion, tq: q}, nil
 	case *ent.QuestionHistoryQuery:
 		return &query[*ent.QuestionHistoryQuery, predicate.QuestionHistory, questionhistory.OrderOption]{typ: ent.TypeQuestionHistory, tq: q}, nil
 	case *ent.QuizQuery:

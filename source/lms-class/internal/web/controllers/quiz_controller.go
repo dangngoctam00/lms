@@ -4,16 +4,17 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"lms-class/common/result"
 	"lms-class/internal/services"
-	"lms-class/internal/web/dto"
+	"lms-class/internal/web/dto/question"
+	"lms-class/internal/web/dto/quiz"
 )
 
 func CreateQuiz(c *fiber.Ctx) error {
-	quiz := &dto.QuizDto{}
-	if err := c.BodyParser(quiz); err != nil {
+	dto := &quiz.QuizDto{}
+	if err := c.BodyParser(dto); err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	id, err := services.CreateQuiz(quiz)
-	response := &dto.QuizDto{}
+	id, err := services.CreateQuiz(dto)
+	response := &quiz.QuizDto{}
 	response.WithId(id)
 	return result.HttpResult(c, response, err)
 }
@@ -45,7 +46,7 @@ func AnswerQuestionById(c *fiber.Ctx) error {
 	if err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	answers := &dto.AnswerQuestion{}
+	answers := &question.AnswerQuestion{}
 	if err := c.BodyParser(answers); err != nil {
 		return result.ParamErrorResult(c, err)
 	}

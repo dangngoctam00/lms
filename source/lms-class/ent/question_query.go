@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"lms-class/ent/predicate"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"math"
 
 	"entgo.io/ent/dialect"
@@ -19,7 +19,7 @@ import (
 type QuestionQuery struct {
 	config
 	ctx        *QueryContext
-	order      []question.OrderOption
+	order      []entquestion.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Question
 	modifiers  []func(*sql.Selector)
@@ -54,7 +54,7 @@ func (qq *QuestionQuery) Unique(unique bool) *QuestionQuery {
 }
 
 // Order specifies how the records should be ordered.
-func (qq *QuestionQuery) Order(o ...question.OrderOption) *QuestionQuery {
+func (qq *QuestionQuery) Order(o ...entquestion.OrderOption) *QuestionQuery {
 	qq.order = append(qq.order, o...)
 	return qq
 }
@@ -67,7 +67,7 @@ func (qq *QuestionQuery) First(ctx context.Context) (*Question, error) {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{question.Label}
+		return nil, &NotFoundError{entquestion.Label}
 	}
 	return nodes[0], nil
 }
@@ -89,7 +89,7 @@ func (qq *QuestionQuery) FirstID(ctx context.Context) (id int, err error) {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{question.Label}
+		err = &NotFoundError{entquestion.Label}
 		return
 	}
 	return ids[0], nil
@@ -116,9 +116,9 @@ func (qq *QuestionQuery) Only(ctx context.Context) (*Question, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{question.Label}
+		return nil, &NotFoundError{entquestion.Label}
 	default:
-		return nil, &NotSingularError{question.Label}
+		return nil, &NotSingularError{entquestion.Label}
 	}
 }
 
@@ -143,9 +143,9 @@ func (qq *QuestionQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{question.Label}
+		err = &NotFoundError{entquestion.Label}
 	default:
-		err = &NotSingularError{question.Label}
+		err = &NotSingularError{entquestion.Label}
 	}
 	return
 }
@@ -184,7 +184,7 @@ func (qq *QuestionQuery) IDs(ctx context.Context) (ids []int, err error) {
 		qq.Unique(true)
 	}
 	ctx = setContextOp(ctx, qq.ctx, "IDs")
-	if err = qq.Select(question.FieldID).Scan(ctx, &ids); err != nil {
+	if err = qq.Select(entquestion.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -248,7 +248,7 @@ func (qq *QuestionQuery) Clone() *QuestionQuery {
 	return &QuestionQuery{
 		config:     qq.config,
 		ctx:        qq.ctx.Clone(),
-		order:      append([]question.OrderOption{}, qq.order...),
+		order:      append([]entquestion.OrderOption{}, qq.order...),
 		inters:     append([]Interceptor{}, qq.inters...),
 		predicates: append([]predicate.Question{}, qq.predicates...),
 		// clone intermediate query.
@@ -268,14 +268,14 @@ func (qq *QuestionQuery) Clone() *QuestionQuery {
 //	}
 //
 //	client.Question.Query().
-//		GroupBy(question.FieldContext).
+//		GroupBy(entquestion.FieldContext).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (qq *QuestionQuery) GroupBy(field string, fields ...string) *QuestionGroupBy {
 	qq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &QuestionGroupBy{build: qq}
 	grbuild.flds = &qq.ctx.Fields
-	grbuild.label = question.Label
+	grbuild.label = entquestion.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -290,12 +290,12 @@ func (qq *QuestionQuery) GroupBy(field string, fields ...string) *QuestionGroupB
 //	}
 //
 //	client.Question.Query().
-//		Select(question.FieldContext).
+//		Select(entquestion.FieldContext).
 //		Scan(ctx, &v)
 func (qq *QuestionQuery) Select(fields ...string) *QuestionSelect {
 	qq.ctx.Fields = append(qq.ctx.Fields, fields...)
 	sbuild := &QuestionSelect{QuestionQuery: qq}
-	sbuild.label = question.Label
+	sbuild.label = entquestion.Label
 	sbuild.flds, sbuild.scan = &qq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
@@ -317,7 +317,7 @@ func (qq *QuestionQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range qq.ctx.Fields {
-		if !question.ValidColumn(f) {
+		if !entquestion.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -372,7 +372,7 @@ func (qq *QuestionQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (qq *QuestionQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(question.Table, question.Columns, sqlgraph.NewFieldSpec(question.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(entquestion.Table, entquestion.Columns, sqlgraph.NewFieldSpec(entquestion.FieldID, field.TypeInt))
 	_spec.From = qq.sql
 	if unique := qq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -381,9 +381,9 @@ func (qq *QuestionQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := qq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, question.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, entquestion.FieldID)
 		for i := range fields {
-			if fields[i] != question.FieldID {
+			if fields[i] != entquestion.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -413,10 +413,10 @@ func (qq *QuestionQuery) querySpec() *sqlgraph.QuerySpec {
 
 func (qq *QuestionQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(qq.driver.Dialect())
-	t1 := builder.Table(question.Table)
+	t1 := builder.Table(entquestion.Table)
 	columns := qq.ctx.Fields
 	if len(columns) == 0 {
-		columns = question.Columns
+		columns = entquestion.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if qq.sql != nil {

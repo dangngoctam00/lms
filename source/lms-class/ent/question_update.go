@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"lms-class/ent/predicate"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -140,7 +140,7 @@ func (qu *QuestionUpdate) ExecX(ctx context.Context) {
 }
 
 func (qu *QuestionUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(question.Table, question.Columns, sqlgraph.NewFieldSpec(question.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(entquestion.Table, entquestion.Columns, sqlgraph.NewFieldSpec(entquestion.FieldID, field.TypeInt))
 	if ps := qu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -149,43 +149,43 @@ func (qu *QuestionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := qu.mutation.Context(); ok {
-		_spec.SetField(question.FieldContext, field.TypeString, value)
+		_spec.SetField(entquestion.FieldContext, field.TypeString, value)
 	}
 	if value, ok := qu.mutation.ContextId(); ok {
-		_spec.SetField(question.FieldContextId, field.TypeInt, value)
+		_spec.SetField(entquestion.FieldContextId, field.TypeInt, value)
 	}
 	if value, ok := qu.mutation.AddedContextId(); ok {
-		_spec.AddField(question.FieldContextId, field.TypeInt, value)
+		_spec.AddField(entquestion.FieldContextId, field.TypeInt, value)
 	}
 	if value, ok := qu.mutation.Position(); ok {
-		_spec.SetField(question.FieldPosition, field.TypeInt, value)
+		_spec.SetField(entquestion.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := qu.mutation.AddedPosition(); ok {
-		_spec.AddField(question.FieldPosition, field.TypeInt, value)
+		_spec.AddField(entquestion.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := qu.mutation.QuestionType(); ok {
-		_spec.SetField(question.FieldQuestionType, field.TypeString, value)
+		_spec.SetField(entquestion.FieldQuestionType, field.TypeString, value)
 	}
 	if value, ok := qu.mutation.Data(); ok {
-		_spec.SetField(question.FieldData, field.TypeJSON, value)
+		_spec.SetField(entquestion.FieldData, field.TypeJSON, value)
 	}
 	if value, ok := qu.mutation.AppendedData(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, question.FieldData, value)
+			sqljson.Append(u, entquestion.FieldData, value)
 		})
 	}
 	if value, ok := qu.mutation.UpdatedAt(); ok {
-		_spec.SetField(question.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(entquestion.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := qu.mutation.Version(); ok {
-		_spec.SetField(question.FieldVersion, field.TypeInt64, value)
+		_spec.SetField(entquestion.FieldVersion, field.TypeInt64, value)
 	}
 	if value, ok := qu.mutation.AddedVersion(); ok {
-		_spec.AddField(question.FieldVersion, field.TypeInt64, value)
+		_spec.AddField(entquestion.FieldVersion, field.TypeInt64, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, qu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{question.Label}
+			err = &NotFoundError{entquestion.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -326,7 +326,7 @@ func (quo *QuestionUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (quo *QuestionUpdateOne) sqlSave(ctx context.Context) (_node *Question, err error) {
-	_spec := sqlgraph.NewUpdateSpec(question.Table, question.Columns, sqlgraph.NewFieldSpec(question.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(entquestion.Table, entquestion.Columns, sqlgraph.NewFieldSpec(entquestion.FieldID, field.TypeInt))
 	id, ok := quo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Question.id" for update`)}
@@ -334,12 +334,12 @@ func (quo *QuestionUpdateOne) sqlSave(ctx context.Context) (_node *Question, err
 	_spec.Node.ID.Value = id
 	if fields := quo.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, question.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, entquestion.FieldID)
 		for _, f := range fields {
-			if !question.ValidColumn(f) {
+			if !entquestion.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != question.FieldID {
+			if f != entquestion.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
@@ -352,46 +352,46 @@ func (quo *QuestionUpdateOne) sqlSave(ctx context.Context) (_node *Question, err
 		}
 	}
 	if value, ok := quo.mutation.Context(); ok {
-		_spec.SetField(question.FieldContext, field.TypeString, value)
+		_spec.SetField(entquestion.FieldContext, field.TypeString, value)
 	}
 	if value, ok := quo.mutation.ContextId(); ok {
-		_spec.SetField(question.FieldContextId, field.TypeInt, value)
+		_spec.SetField(entquestion.FieldContextId, field.TypeInt, value)
 	}
 	if value, ok := quo.mutation.AddedContextId(); ok {
-		_spec.AddField(question.FieldContextId, field.TypeInt, value)
+		_spec.AddField(entquestion.FieldContextId, field.TypeInt, value)
 	}
 	if value, ok := quo.mutation.Position(); ok {
-		_spec.SetField(question.FieldPosition, field.TypeInt, value)
+		_spec.SetField(entquestion.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := quo.mutation.AddedPosition(); ok {
-		_spec.AddField(question.FieldPosition, field.TypeInt, value)
+		_spec.AddField(entquestion.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := quo.mutation.QuestionType(); ok {
-		_spec.SetField(question.FieldQuestionType, field.TypeString, value)
+		_spec.SetField(entquestion.FieldQuestionType, field.TypeString, value)
 	}
 	if value, ok := quo.mutation.Data(); ok {
-		_spec.SetField(question.FieldData, field.TypeJSON, value)
+		_spec.SetField(entquestion.FieldData, field.TypeJSON, value)
 	}
 	if value, ok := quo.mutation.AppendedData(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, question.FieldData, value)
+			sqljson.Append(u, entquestion.FieldData, value)
 		})
 	}
 	if value, ok := quo.mutation.UpdatedAt(); ok {
-		_spec.SetField(question.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(entquestion.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := quo.mutation.Version(); ok {
-		_spec.SetField(question.FieldVersion, field.TypeInt64, value)
+		_spec.SetField(entquestion.FieldVersion, field.TypeInt64, value)
 	}
 	if value, ok := quo.mutation.AddedVersion(); ok {
-		_spec.AddField(question.FieldVersion, field.TypeInt64, value)
+		_spec.AddField(entquestion.FieldVersion, field.TypeInt64, value)
 	}
 	_node = &Question{config: quo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, quo.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{question.Label}
+			err = &NotFoundError{entquestion.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

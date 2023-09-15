@@ -5,7 +5,7 @@ package ent
 import (
 	"encoding/json"
 	"fmt"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"strings"
 	"time"
 
@@ -40,13 +40,13 @@ func (*Question) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case question.FieldData:
+		case entquestion.FieldData:
 			values[i] = new([]byte)
-		case question.FieldID, question.FieldContextId, question.FieldPosition, question.FieldVersion:
+		case entquestion.FieldID, entquestion.FieldContextId, entquestion.FieldPosition, entquestion.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case question.FieldContext, question.FieldQuestionType:
+		case entquestion.FieldContext, entquestion.FieldQuestionType:
 			values[i] = new(sql.NullString)
-		case question.FieldUpdatedAt:
+		case entquestion.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,37 +63,37 @@ func (q *Question) assignValues(columns []string, values []any) error {
 	}
 	for i := range columns {
 		switch columns[i] {
-		case question.FieldID:
+		case entquestion.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			q.ID = int(value.Int64)
-		case question.FieldContext:
+		case entquestion.FieldContext:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field context", values[i])
 			} else if value.Valid {
 				q.Context = value.String
 			}
-		case question.FieldContextId:
+		case entquestion.FieldContextId:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field contextId", values[i])
 			} else if value.Valid {
 				q.ContextId = int(value.Int64)
 			}
-		case question.FieldPosition:
+		case entquestion.FieldPosition:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field position", values[i])
 			} else if value.Valid {
 				q.Position = int(value.Int64)
 			}
-		case question.FieldQuestionType:
+		case entquestion.FieldQuestionType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field questionType", values[i])
 			} else if value.Valid {
 				q.QuestionType = value.String
 			}
-		case question.FieldData:
+		case entquestion.FieldData:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field data", values[i])
 			} else if value != nil && len(*value) > 0 {
@@ -101,13 +101,13 @@ func (q *Question) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field data: %w", err)
 				}
 			}
-		case question.FieldUpdatedAt:
+		case entquestion.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
 			} else if value.Valid {
 				q.UpdatedAt = value.Time
 			}
-		case question.FieldVersion:
+		case entquestion.FieldVersion:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field version", values[i])
 			} else if value.Valid {

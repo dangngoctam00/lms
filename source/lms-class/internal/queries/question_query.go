@@ -5,9 +5,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/flume/enthistory"
 	"lms-class/ent"
-	"lms-class/ent/question"
+	entQuestion "lms-class/ent/question"
 	"lms-class/ent/questionhistory"
-	"lms-class/internal/web/dto"
+	"lms-class/internal/web/dto/question"
+	"lms-class/pkg"
 	"lms-class/pkg/utils"
 	"time"
 )
@@ -24,8 +25,10 @@ func GetQuestionsByExamAndPublishedTime(examId int, lastPublished time.Time) ([]
 	all, err := utils.EntClient.QuestionHistory.Query().
 		Where(func(s *sql.Selector) {
 			t := sql.Table(questionhistory.Table).As("q2")
+			t.Schema(pkg.GetTenant())
 			subQuery := sql.Select(sql.Max(t.C(questionhistory.FieldHistoryTime))).
 				From(t).Where(sql.EQ(t.C(questionhistory.FieldRef), sql.Expr(s.C(questionhistory.FieldRef))))
+			//subQuery.Table().Schema(pkg.GetTenant())
 			subQuery.Where(sql.EQ(t.C(questionhistory.FieldContextId), examId))
 			subQuery.Where(sql.EQ(t.C(questionhistory.FieldContext), "EXAM"))
 			subQuery.Where(sql.LTE(t.C(questionhistory.FieldHistoryTime), lastPublished))
@@ -38,7 +41,7 @@ func GetQuestionsByExamAndPublishedTime(examId int, lastPublished time.Time) ([]
 func GetQuestionsByExam(examId int) ([]*ent.Question, error) {
 	return utils.EntClient.Question.
 		Query().
-		Where(question.ContextEQ(dto.Exam),
-			question.ContextIdEQ(examId)).
+		Where(entQuestion.ContextEQ(question.Exam),
+			entQuestion.ContextIdEQ(examId)).
 		All(context.Background())
 }

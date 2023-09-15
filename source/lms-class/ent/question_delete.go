@@ -5,11 +5,12 @@ package ent
 import (
 	"context"
 	"lms-class/ent/predicate"
-	"lms-class/ent/question"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+
+	entquestion "lms-class/ent/question"
 )
 
 // QuestionDelete is the builder for deleting a Question entity.
@@ -40,7 +41,7 @@ func (qd *QuestionDelete) ExecX(ctx context.Context) int {
 }
 
 func (qd *QuestionDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(question.Table, sqlgraph.NewFieldSpec(question.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewDeleteSpec(entquestion.Table, sqlgraph.NewFieldSpec(entquestion.FieldID, field.TypeInt))
 	if ps := qd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -74,7 +75,7 @@ func (qdo *QuestionDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{question.Label}
+		return &NotFoundError{entquestion.Label}
 	default:
 		return nil
 	}

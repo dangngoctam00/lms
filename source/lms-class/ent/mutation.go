@@ -10,11 +10,11 @@ import (
 	"lms-class/ent/exam"
 	"lms-class/ent/examhistory"
 	"lms-class/ent/predicate"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"lms-class/ent/questionhistory"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
-	"lms-class/internal/web/dto"
+	"lms-class/internal/web/dto/question"
 	"sync"
 	"time"
 
@@ -2286,25 +2286,25 @@ func (m *QuestionMutation) Type() string {
 func (m *QuestionMutation) Fields() []string {
 	fields := make([]string, 0, 7)
 	if m.context != nil {
-		fields = append(fields, question.FieldContext)
+		fields = append(fields, entquestion.FieldContext)
 	}
 	if m.contextId != nil {
-		fields = append(fields, question.FieldContextId)
+		fields = append(fields, entquestion.FieldContextId)
 	}
 	if m.position != nil {
-		fields = append(fields, question.FieldPosition)
+		fields = append(fields, entquestion.FieldPosition)
 	}
 	if m.questionType != nil {
-		fields = append(fields, question.FieldQuestionType)
+		fields = append(fields, entquestion.FieldQuestionType)
 	}
 	if m.data != nil {
-		fields = append(fields, question.FieldData)
+		fields = append(fields, entquestion.FieldData)
 	}
 	if m.updatedAt != nil {
-		fields = append(fields, question.FieldUpdatedAt)
+		fields = append(fields, entquestion.FieldUpdatedAt)
 	}
 	if m.version != nil {
-		fields = append(fields, question.FieldVersion)
+		fields = append(fields, entquestion.FieldVersion)
 	}
 	return fields
 }
@@ -2314,19 +2314,19 @@ func (m *QuestionMutation) Fields() []string {
 // schema.
 func (m *QuestionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case question.FieldContext:
+	case entquestion.FieldContext:
 		return m.Context()
-	case question.FieldContextId:
+	case entquestion.FieldContextId:
 		return m.ContextId()
-	case question.FieldPosition:
+	case entquestion.FieldPosition:
 		return m.Position()
-	case question.FieldQuestionType:
+	case entquestion.FieldQuestionType:
 		return m.QuestionType()
-	case question.FieldData:
+	case entquestion.FieldData:
 		return m.Data()
-	case question.FieldUpdatedAt:
+	case entquestion.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case question.FieldVersion:
+	case entquestion.FieldVersion:
 		return m.Version()
 	}
 	return nil, false
@@ -2337,19 +2337,19 @@ func (m *QuestionMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *QuestionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case question.FieldContext:
+	case entquestion.FieldContext:
 		return m.OldContext(ctx)
-	case question.FieldContextId:
+	case entquestion.FieldContextId:
 		return m.OldContextId(ctx)
-	case question.FieldPosition:
+	case entquestion.FieldPosition:
 		return m.OldPosition(ctx)
-	case question.FieldQuestionType:
+	case entquestion.FieldQuestionType:
 		return m.OldQuestionType(ctx)
-	case question.FieldData:
+	case entquestion.FieldData:
 		return m.OldData(ctx)
-	case question.FieldUpdatedAt:
+	case entquestion.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case question.FieldVersion:
+	case entquestion.FieldVersion:
 		return m.OldVersion(ctx)
 	}
 	return nil, fmt.Errorf("unknown Question field %s", name)
@@ -2360,49 +2360,49 @@ func (m *QuestionMutation) OldField(ctx context.Context, name string) (ent.Value
 // type.
 func (m *QuestionMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case question.FieldContext:
+	case entquestion.FieldContext:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetContext(v)
 		return nil
-	case question.FieldContextId:
+	case entquestion.FieldContextId:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetContextId(v)
 		return nil
-	case question.FieldPosition:
+	case entquestion.FieldPosition:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPosition(v)
 		return nil
-	case question.FieldQuestionType:
+	case entquestion.FieldQuestionType:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetQuestionType(v)
 		return nil
-	case question.FieldData:
+	case entquestion.FieldData:
 		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetData(v)
 		return nil
-	case question.FieldUpdatedAt:
+	case entquestion.FieldUpdatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
 		return nil
-	case question.FieldVersion:
+	case entquestion.FieldVersion:
 		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -2418,13 +2418,13 @@ func (m *QuestionMutation) SetField(name string, value ent.Value) error {
 func (m *QuestionMutation) AddedFields() []string {
 	var fields []string
 	if m.addcontextId != nil {
-		fields = append(fields, question.FieldContextId)
+		fields = append(fields, entquestion.FieldContextId)
 	}
 	if m.addposition != nil {
-		fields = append(fields, question.FieldPosition)
+		fields = append(fields, entquestion.FieldPosition)
 	}
 	if m.addversion != nil {
-		fields = append(fields, question.FieldVersion)
+		fields = append(fields, entquestion.FieldVersion)
 	}
 	return fields
 }
@@ -2434,11 +2434,11 @@ func (m *QuestionMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *QuestionMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case question.FieldContextId:
+	case entquestion.FieldContextId:
 		return m.AddedContextId()
-	case question.FieldPosition:
+	case entquestion.FieldPosition:
 		return m.AddedPosition()
-	case question.FieldVersion:
+	case entquestion.FieldVersion:
 		return m.AddedVersion()
 	}
 	return nil, false
@@ -2449,21 +2449,21 @@ func (m *QuestionMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *QuestionMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case question.FieldContextId:
+	case entquestion.FieldContextId:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddContextId(v)
 		return nil
-	case question.FieldPosition:
+	case entquestion.FieldPosition:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddPosition(v)
 		return nil
-	case question.FieldVersion:
+	case entquestion.FieldVersion:
 		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -2497,25 +2497,25 @@ func (m *QuestionMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *QuestionMutation) ResetField(name string) error {
 	switch name {
-	case question.FieldContext:
+	case entquestion.FieldContext:
 		m.ResetContext()
 		return nil
-	case question.FieldContextId:
+	case entquestion.FieldContextId:
 		m.ResetContextId()
 		return nil
-	case question.FieldPosition:
+	case entquestion.FieldPosition:
 		m.ResetPosition()
 		return nil
-	case question.FieldQuestionType:
+	case entquestion.FieldQuestionType:
 		m.ResetQuestionType()
 		return nil
-	case question.FieldData:
+	case entquestion.FieldData:
 		m.ResetData()
 		return nil
-	case question.FieldUpdatedAt:
+	case entquestion.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
-	case question.FieldVersion:
+	case entquestion.FieldVersion:
 		m.ResetVersion()
 		return nil
 	}
@@ -5417,7 +5417,7 @@ type QuizSubmissionMutation struct {
 	submittedAt     *time.Time
 	questions       *json.RawMessage
 	appendquestions json.RawMessage
-	answers         *map[int][]dto.Key
+	answers         *map[int][]question.Key
 	score           *int
 	addscore        *int
 	clearedFields   map[string]struct{}
@@ -5755,12 +5755,12 @@ func (m *QuizSubmissionMutation) ResetQuestions() {
 }
 
 // SetAnswers sets the "answers" field.
-func (m *QuizSubmissionMutation) SetAnswers(value map[int][]dto.Key) {
+func (m *QuizSubmissionMutation) SetAnswers(value map[int][]question.Key) {
 	m.answers = &value
 }
 
 // Answers returns the value of the "answers" field in the mutation.
-func (m *QuizSubmissionMutation) Answers() (r map[int][]dto.Key, exists bool) {
+func (m *QuizSubmissionMutation) Answers() (r map[int][]question.Key, exists bool) {
 	v := m.answers
 	if v == nil {
 		return
@@ -5771,7 +5771,7 @@ func (m *QuizSubmissionMutation) Answers() (r map[int][]dto.Key, exists bool) {
 // OldAnswers returns the old "answers" field's value of the QuizSubmission entity.
 // If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v map[int][]dto.Key, err error) {
+func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v map[int][]question.Key, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAnswers is only allowed on UpdateOne operations")
 	}
@@ -6059,7 +6059,7 @@ func (m *QuizSubmissionMutation) SetField(name string, value ent.Value) error {
 		m.SetQuestions(v)
 		return nil
 	case quizsubmission.FieldAnswers:
-		v, ok := value.(map[int][]dto.Key)
+		v, ok := value.(map[int][]question.Key)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

@@ -6,12 +6,12 @@ import (
 	"lms-class/common/result"
 	"lms-class/ent"
 	"lms-class/internal/services"
-	"lms-class/internal/web/dto"
+	questionDto "lms-class/internal/web/dto/question"
 	"log"
 )
 
 func init() {
-	if err := mapper.Register(&dto.QuestionDto{}); err != nil {
+	if err := mapper.Register(&questionDto.QuestionDto{}); err != nil {
 		log.Fatal("error while registering mapper exam")
 		return
 	}
@@ -22,7 +22,7 @@ func init() {
 }
 
 func CreateQuestion(c *fiber.Ctx) error {
-	question := &dto.Question{}
+	question := &questionDto.Question{}
 	if err := c.BodyParser(question); err != nil {
 		return result.ParamErrorResult(c, err)
 	}
@@ -35,7 +35,7 @@ func UpdateQuestion(c *fiber.Ctx) error {
 	if err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	question := &dto.Question{}
+	question := &questionDto.Question{}
 	if err := c.BodyParser(question); err != nil {
 		return result.ParamErrorResult(c, err)
 	}
@@ -51,12 +51,14 @@ func GetQuestionById(c *fiber.Ctx) error {
 	if err != nil {
 		return result.HttpResult(c, nil, err)
 	}
-	questionDto := dto.QuestionDto{}
-	questionDto.SetData(question.QuestionType, question.Data)
+	dto := questionDto.QuestionDto{}
+	if err := dto.SetQuestionData(question.QuestionType, question.Data); err != nil {
+		return err
+	}
 
 	mapper.SetEnableFieldIgnoreTag(true)
-	if err = mapper.AutoMapper(question, &questionDto); err != nil {
+	if err = mapper.AutoMapper(question, &dto); err != nil {
 		return result.HttpResult(c, nil, err)
 	}
-	return result.HttpResult(c, questionDto, err)
+	return result.HttpResult(c, dto, err)
 }

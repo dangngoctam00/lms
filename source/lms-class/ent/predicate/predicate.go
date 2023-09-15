@@ -12,7 +12,7 @@ type Exam func(*sql.Selector)
 // ExamHistory is the predicate function for examhistory builders.
 type ExamHistory func(*sql.Selector)
 
-// Question is the predicate function for question builders.
+// Question is the predicate function for entquestion builders.
 type Question func(*sql.Selector)
 
 // QuestionHistory is the predicate function for questionhistory builders.

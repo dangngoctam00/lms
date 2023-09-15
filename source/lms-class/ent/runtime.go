@@ -4,7 +4,7 @@ package ent
 
 import (
 	"lms-class/ent/examhistory"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"lms-class/ent/questionhistory"
 	"lms-class/ent/schema"
 	"time"
@@ -20,12 +20,12 @@ func init() {
 	examhistoryDescHistoryTime := examhistoryFields[0].Descriptor()
 	// examhistory.DefaultHistoryTime holds the default value on creation for the history_time field.
 	examhistory.DefaultHistoryTime = examhistoryDescHistoryTime.Default.(func() time.Time)
-	questionFields := schema.Question{}.Fields()
-	_ = questionFields
-	// questionDescVersion is the schema descriptor for version field.
-	questionDescVersion := questionFields[6].Descriptor()
-	// question.DefaultVersion holds the default value on creation for the version field.
-	question.DefaultVersion = questionDescVersion.Default.(func() int64)
+	entquestionFields := schema.Question{}.Fields()
+	_ = entquestionFields
+	// entquestionDescVersion is the schema descriptor for version field.
+	entquestionDescVersion := entquestionFields[6].Descriptor()
+	// entquestion.DefaultVersion holds the default value on creation for the version field.
+	entquestion.DefaultVersion = entquestionDescVersion.Default.(func() int64)
 	questionhistoryFields := schema.QuestionHistory{}.Fields()
 	_ = questionhistoryFields
 	// questionhistoryDescHistoryTime is the schema descriptor for history_time field.

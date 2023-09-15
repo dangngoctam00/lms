@@ -12,7 +12,7 @@ import (
 
 	"lms-class/ent/exam"
 	"lms-class/ent/examhistory"
-	"lms-class/ent/question"
+	entquestion "lms-class/ent/question"
 	"lms-class/ent/questionhistory"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
@@ -519,13 +519,13 @@ func NewQuestionClient(c config) *QuestionClient {
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `question.Hooks(f(g(h())))`.
+// A call to `Use(f, g, h)` equals to `entquestion.Hooks(f(g(h())))`.
 func (c *QuestionClient) Use(hooks ...Hook) {
 	c.hooks.Question = append(c.hooks.Question, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `question.Intercept(f(g(h())))`.
+// A call to `Intercept(f, g, h)` equals to `entquestion.Intercept(f(g(h())))`.
 func (c *QuestionClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Question = append(c.inters.Question, interceptors...)
 }
@@ -572,7 +572,7 @@ func (c *QuestionClient) DeleteOne(q *Question) *QuestionDeleteOne {
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
 func (c *QuestionClient) DeleteOneID(id int) *QuestionDeleteOne {
-	builder := c.Delete().Where(question.ID(id))
+	builder := c.Delete().Where(entquestion.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
 	return &QuestionDeleteOne{builder}
@@ -589,7 +589,7 @@ func (c *QuestionClient) Query() *QuestionQuery {
 
 // Get returns a Question entity by its id.
 func (c *QuestionClient) Get(ctx context.Context, id int) (*Question, error) {
-	return c.Query().Where(question.ID(id)).Only(ctx)
+	return c.Query().Where(entquestion.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.

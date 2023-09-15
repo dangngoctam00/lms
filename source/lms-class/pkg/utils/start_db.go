@@ -3,16 +3,17 @@ package utils
 import (
 	"context"
 	"database/sql"
+	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	entSql "entgo.io/ent/dialect/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	entLms "lms-class/ent"
+	"lms-class/ent/intercept"
 	"lms-class/pkg"
 	"log"
 	"os"
 	"sync"
-
-	_ "github.com/lib/pq"
 )
 
 var EntClient *entLms.Client
@@ -39,11 +40,43 @@ func InitDatabaseExtensions() error {
 				log.Print(a)
 			})
 			EntClient = entLms.NewClient(entLms.Driver(wrapperDriver))
-			EntClient.WithHistory()
 			// TODO: extract tenant from request instead of hard coding value
-			pkg.LmsContext = context.WithValue(context.Background(), pkg.SchemaKey, "ngman")
+			pkg.LmsContext = context.WithValue(context.Background(), pkg.SchemaKey, "ngtam")
+			EntClient.Intercept(ent.InterceptFunc(func(next ent.Querier) ent.Querier {
+				return ent.QuerierFunc(func(ctx context.Context, query ent.Query) (ent.Value, error) {
+					q, err := intercept.NewQuery(query)
+					q.WhereP(func(selector *entSql.Selector) {
+						selector.Table().Schema(pkg.GetTenant())
+					})
+					// Do something before the query execution.
+					value, err := next.Query(ctx, query)
+					// Do something after the query execution.
+					return value, err
+				})
+			}))
+
+			// TODO: Doesn't work
+
+			//EntClient.Use(func(next ent.Mutator) ent.Mutator {
+			//	return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			//		if m, ok := m.(*entLms.ExamMutation); ok {
+			//			m.WhereP(func(selector *entSql.Selector) {
+			//				selector.Table().Schema(pkg.GetTenant())
+			//			})
+			//		}
+			//		if m, ok := m.(*entLms.ExamHistoryMutation); ok {
+			//			m.WhereP(func(selector *entSql.Selector) {
+			//				selector.Table().Schema(pkg.GetTenant())
+			//			})
+			//		}
+			//		return next.Mutate(ctx, m)
+			//	})
+			//})
+
+			EntClient.WithHistory()
 			err = EntClient.Schema.Create(pkg.LmsContext)
 		}
+		_ = drv.Exec(context.Background(), "set search_path=", []any{}, nil)
 	})
 	return err
 }

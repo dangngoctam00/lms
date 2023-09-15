@@ -7,13 +7,15 @@ import (
 	"lms-class/common/xerr"
 	"lms-class/ent"
 	"lms-class/internal/queries"
-	"lms-class/internal/web/dto"
+	"lms-class/internal/web/dto/exam"
+	"lms-class/internal/web/dto/question"
+	"lms-class/internal/web/dto/quiz"
 	"lms-class/pkg/utils"
 	"math/rand"
 	"time"
 )
 
-func CreateQuiz(quizDto *dto.QuizDto) (*int, error) {
+func CreateQuiz(quizDto *quiz.QuizDto) (*int, error) {
 	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
 		return doCreateQuiz(quizDto, tx)
 	})
@@ -30,7 +32,7 @@ func GetQuizById(id int) (*ent.Quiz, error) {
 	return byId, err
 }
 
-func GetQuizSession(id int) (*dto.QuizSession, error) {
+func GetQuizSession(id int) (*quiz.QuizSession, error) {
 	byId, err := queries.GetQuizSubmissionById(id)
 	if err != nil {
 		if _, ok := err.(*ent.NotFoundError); ok {
@@ -38,9 +40,9 @@ func GetQuizSession(id int) (*dto.QuizSession, error) {
 		}
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 	}
-	response := new(dto.QuizSession)
+	response := new(quiz.QuizSession)
 	response.ID = byId.ID
-	var questions []dto.QuestionQuizSession
+	var questions []question.QuestionQuizSession
 	if err = json.Unmarshal(byId.Questions, &questions); err != nil {
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 	}
@@ -55,7 +57,7 @@ func GetQuizSession(id int) (*dto.QuizSession, error) {
 	return response, nil
 }
 
-func AnswerQuestionById(sessionId, questionId int, answer []dto.Key) (*int, error) {
+func AnswerQuestionById(sessionId, questionId int, answer []question.Key) (*int, error) {
 	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
 		session, err := queries.GetQuizSubmissionByIdOnUpdate(tx, sessionId)
 		if err != nil {
@@ -70,7 +72,7 @@ func AnswerQuestionById(sessionId, questionId int, answer []dto.Key) (*int, erro
 		}
 		answers := session.Answers
 		if answers == nil {
-			answers = make(map[int][]dto.Key)
+			answers = make(map[int][]question.Key)
 		}
 		answers[questionId] = answer
 		_, err = session.Update().
@@ -117,7 +119,7 @@ func validateDoQuiz(quiz *ent.Quiz) bool {
 		quiz.TimeLimit != nil
 }
 
-func shuffleQuestions(exam *dto.ExamDto) []dto.QuestionQuizSession {
+func shuffleQuestions(exam *exam.ExamDto) []question.QuestionQuizSession {
 	questions := exam.Questions
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	r.Shuffle(len(questions), func(i, j int) {
@@ -127,18 +129,18 @@ func shuffleQuestions(exam *dto.ExamDto) []dto.QuestionQuizSession {
 		questions[i].Position = i
 	}
 	for i := range questions {
-		if q, ok := questions[i].Data.(dto.QuestionAction); ok {
+		if q, ok := questions[i].Data.(question.IQuestion); ok {
 			q.Shuffle()
 		}
 	}
-	questionsInSession := make([]dto.QuestionQuizSession, len(questions))
-	for i, question := range questions {
-		questionsInSession[i] = *dto.NewQuestionQuizSession(question)
+	questionsInSession := make([]question.QuestionQuizSession, len(questions))
+	for i, q := range questions {
+		questionsInSession[i] = *question.NewQuestionQuizSession(q)
 	}
 	return questionsInSession
 }
 
-func doCreateQuiz(quizDto *dto.QuizDto, tx *ent.Tx) (*int, error) {
+func doCreateQuiz(quizDto *quiz.QuizDto, tx *ent.Tx) (*int, error) {
 	if quizDto.ExamId != nil {
 		existed, err := IsExamExisted(*quizDto.ExamId)
 		if err != nil {
