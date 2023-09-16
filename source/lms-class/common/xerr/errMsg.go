@@ -12,6 +12,9 @@ func init() {
 
 	message[QuizSessionClosed] = "Quiz session has been closed"
 	message[QuizNotConfigured] = "Quiz has not been configured"
+	message[QuizSessionIsNotAllowedView] = "Quiz session has not been allowed to view"
+
+	message[QuestionDataNotCorrect] = "Question data is not correct, please check again"
 }
 
 func MapErrMsg(errCode uint32) string {

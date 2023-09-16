@@ -14,7 +14,7 @@ import (
 	"lms-class/ent/questionhistory"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
-	"lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
 	"sync"
 	"time"
 
@@ -3688,6 +3688,7 @@ type QuizMutation struct {
 	addmaxAttempt            *int
 	viewPreviousSessions     *bool
 	viewPreviousSessionsTime *time.Time
+	viewResult               *bool
 	passedScore              *int
 	addpassedScore           *int
 	finalGradedStrategy      *string
@@ -4550,6 +4551,42 @@ func (m *QuizMutation) ResetViewPreviousSessionsTime() {
 	delete(m.clearedFields, quiz.FieldViewPreviousSessionsTime)
 }
 
+// SetViewResult sets the "viewResult" field.
+func (m *QuizMutation) SetViewResult(b bool) {
+	m.viewResult = &b
+}
+
+// ViewResult returns the value of the "viewResult" field in the mutation.
+func (m *QuizMutation) ViewResult() (r bool, exists bool) {
+	v := m.viewResult
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViewResult returns the old "viewResult" field's value of the Quiz entity.
+// If the Quiz object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *QuizMutation) OldViewResult(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewResult is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewResult requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewResult: %w", err)
+	}
+	return oldValue.ViewResult, nil
+}
+
+// ResetViewResult resets all changes to the "viewResult" field.
+func (m *QuizMutation) ResetViewResult() {
+	m.viewResult = nil
+}
+
 // SetPassedScore sets the "passedScore" field.
 func (m *QuizMutation) SetPassedScore(i int) {
 	m.passedScore = &i
@@ -4797,7 +4834,7 @@ func (m *QuizMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *QuizMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 19)
 	if m.title != nil {
 		fields = append(fields, quiz.FieldTitle)
 	}
@@ -4846,6 +4883,9 @@ func (m *QuizMutation) Fields() []string {
 	if m.viewPreviousSessionsTime != nil {
 		fields = append(fields, quiz.FieldViewPreviousSessionsTime)
 	}
+	if m.viewResult != nil {
+		fields = append(fields, quiz.FieldViewResult)
+	}
 	if m.passedScore != nil {
 		fields = append(fields, quiz.FieldPassedScore)
 	}
@@ -4892,6 +4932,8 @@ func (m *QuizMutation) Field(name string) (ent.Value, bool) {
 		return m.ViewPreviousSessions()
 	case quiz.FieldViewPreviousSessionsTime:
 		return m.ViewPreviousSessionsTime()
+	case quiz.FieldViewResult:
+		return m.ViewResult()
 	case quiz.FieldPassedScore:
 		return m.PassedScore()
 	case quiz.FieldFinalGradedStrategy:
@@ -4937,6 +4979,8 @@ func (m *QuizMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldViewPreviousSessions(ctx)
 	case quiz.FieldViewPreviousSessionsTime:
 		return m.OldViewPreviousSessionsTime(ctx)
+	case quiz.FieldViewResult:
+		return m.OldViewResult(ctx)
 	case quiz.FieldPassedScore:
 		return m.OldPassedScore(ctx)
 	case quiz.FieldFinalGradedStrategy:
@@ -5061,6 +5105,13 @@ func (m *QuizMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetViewPreviousSessionsTime(v)
+		return nil
+	case quiz.FieldViewResult:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewResult(v)
 		return nil
 	case quiz.FieldPassedScore:
 		v, ok := value.(int)
@@ -5293,6 +5344,9 @@ func (m *QuizMutation) ResetField(name string) error {
 	case quiz.FieldViewPreviousSessionsTime:
 		m.ResetViewPreviousSessionsTime()
 		return nil
+	case quiz.FieldViewResult:
+		m.ResetViewResult()
+		return nil
 	case quiz.FieldPassedScore:
 		m.ResetPassedScore()
 		return nil
@@ -5417,7 +5471,7 @@ type QuizSubmissionMutation struct {
 	submittedAt     *time.Time
 	questions       *json.RawMessage
 	appendquestions json.RawMessage
-	answers         *map[int][]question.Key
+	answers         *map[int][]dto.Key
 	score           *int
 	addscore        *int
 	clearedFields   map[string]struct{}
@@ -5755,12 +5809,12 @@ func (m *QuizSubmissionMutation) ResetQuestions() {
 }
 
 // SetAnswers sets the "answers" field.
-func (m *QuizSubmissionMutation) SetAnswers(value map[int][]question.Key) {
+func (m *QuizSubmissionMutation) SetAnswers(value map[int][]dto.Key) {
 	m.answers = &value
 }
 
 // Answers returns the value of the "answers" field in the mutation.
-func (m *QuizSubmissionMutation) Answers() (r map[int][]question.Key, exists bool) {
+func (m *QuizSubmissionMutation) Answers() (r map[int][]dto.Key, exists bool) {
 	v := m.answers
 	if v == nil {
 		return
@@ -5771,7 +5825,7 @@ func (m *QuizSubmissionMutation) Answers() (r map[int][]question.Key, exists boo
 // OldAnswers returns the old "answers" field's value of the QuizSubmission entity.
 // If the QuizSubmission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v map[int][]question.Key, err error) {
+func (m *QuizSubmissionMutation) OldAnswers(ctx context.Context) (v map[int][]dto.Key, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAnswers is only allowed on UpdateOne operations")
 	}
@@ -6059,7 +6113,7 @@ func (m *QuizSubmissionMutation) SetField(name string, value ent.Value) error {
 		m.SetQuestions(v)
 		return nil
 	case quizsubmission.FieldAnswers:
-		v, ok := value.(map[int][]question.Key)
+		v, ok := value.(map[int][]dto.Key)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

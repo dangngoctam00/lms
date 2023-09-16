@@ -20,6 +20,8 @@ var EntClient *entLms.Client
 
 var syncOnce sync.Once
 
+var DbCh = make(chan int, 1)
+
 func InitDatabaseExtensions() error {
 	var err error
 	syncOnce.Do(func() {
@@ -77,6 +79,8 @@ func InitDatabaseExtensions() error {
 			err = EntClient.Schema.Create(pkg.LmsContext)
 		}
 		_ = drv.Exec(context.Background(), "set search_path=", []any{}, nil)
+		DbCh <- 1
+		close(DbCh)
 	})
 	return err
 }

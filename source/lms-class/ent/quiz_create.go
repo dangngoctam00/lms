@@ -174,6 +174,12 @@ func (qc *QuizCreate) SetNillableViewPreviousSessionsTime(t *time.Time) *QuizCre
 	return qc
 }
 
+// SetViewResult sets the "viewResult" field.
+func (qc *QuizCreate) SetViewResult(b bool) *QuizCreate {
+	qc.mutation.SetViewResult(b)
+	return qc
+}
+
 // SetPassedScore sets the "passedScore" field.
 func (qc *QuizCreate) SetPassedScore(i int) *QuizCreate {
 	qc.mutation.SetPassedScore(i)
@@ -297,6 +303,9 @@ func (qc *QuizCreate) check() error {
 	if _, ok := qc.mutation.ViewPreviousSessions(); !ok {
 		return &ValidationError{Name: "viewPreviousSessions", err: errors.New(`ent: missing required field "Quiz.viewPreviousSessions"`)}
 	}
+	if _, ok := qc.mutation.ViewResult(); !ok {
+		return &ValidationError{Name: "viewResult", err: errors.New(`ent: missing required field "Quiz.viewResult"`)}
+	}
 	return nil
 }
 
@@ -382,6 +391,10 @@ func (qc *QuizCreate) createSpec() (*Quiz, *sqlgraph.CreateSpec) {
 	if value, ok := qc.mutation.ViewPreviousSessionsTime(); ok {
 		_spec.SetField(quiz.FieldViewPreviousSessionsTime, field.TypeTime, value)
 		_node.ViewPreviousSessionsTime = &value
+	}
+	if value, ok := qc.mutation.ViewResult(); ok {
+		_spec.SetField(quiz.FieldViewResult, field.TypeBool, value)
+		_node.ViewResult = value
 	}
 	if value, ok := qc.mutation.PassedScore(); ok {
 		_spec.SetField(quiz.FieldPassedScore, field.TypeInt, value)

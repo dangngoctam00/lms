@@ -103,6 +103,7 @@ var (
 		{Name: "max_attempt", Type: field.TypeInt, Nullable: true},
 		{Name: "view_previous_sessions", Type: field.TypeBool},
 		{Name: "view_previous_sessions_time", Type: field.TypeTime, Nullable: true},
+		{Name: "view_result", Type: field.TypeBool},
 		{Name: "passed_score", Type: field.TypeInt, Nullable: true},
 		{Name: "final_graded_strategy", Type: field.TypeString, Nullable: true},
 		{Name: "exam_id", Type: field.TypeInt, Nullable: true},
@@ -115,7 +116,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "quiz_exam_quizzes",
-				Columns:    []*schema.Column{QuizColumns[18]},
+				Columns:    []*schema.Column{QuizColumns[19]},
 				RefColumns: []*schema.Column{ExamColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

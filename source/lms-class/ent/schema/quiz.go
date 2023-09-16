@@ -33,6 +33,7 @@ func (Quiz) Fields() []ent.Field {
 		field.Int("maxAttempt").Optional().Nillable(),
 		field.Bool("viewPreviousSessions"),
 		field.Time("viewPreviousSessionsTime").Optional().Nillable(),
+		field.Bool("viewResult"),
 		field.Int("passedScore").Optional().Nillable(),
 		field.String("finalGradedStrategy").Optional().Nillable(),
 	}

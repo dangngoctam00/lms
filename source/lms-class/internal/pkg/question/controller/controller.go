@@ -1,17 +1,17 @@
-package controllers
+package controller
 
 import (
 	"github.com/devfeel/mapper"
 	"github.com/gofiber/fiber/v2"
 	"lms-class/common/result"
 	"lms-class/ent"
-	"lms-class/internal/services"
-	questionDto "lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
+	"lms-class/internal/pkg/question/service"
 	"log"
 )
 
 func init() {
-	if err := mapper.Register(&questionDto.QuestionDto{}); err != nil {
+	if err := mapper.Register(&dto.QuestionDto{}); err != nil {
 		log.Fatal("error while registering mapper exam")
 		return
 	}
@@ -22,11 +22,11 @@ func init() {
 }
 
 func CreateQuestion(c *fiber.Ctx) error {
-	question := &questionDto.Question{}
+	question := &dto.Question{}
 	if err := c.BodyParser(question); err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	id, err := services.CreateQuestion(question)
+	id, err := service.CreateQuestion(question)
 	return result.HttpResult(c, id, err)
 }
 
@@ -35,10 +35,11 @@ func UpdateQuestion(c *fiber.Ctx) error {
 	if err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	question := &questionDto.Question{}
+	question := &dto.Question{}
 	if err := c.BodyParser(question); err != nil {
 		return result.ParamErrorResult(c, err)
 	}
+	_, err = service.UpdateQuestion(id, question)
 	return result.HttpResult(c, id, err)
 }
 
@@ -47,18 +48,18 @@ func GetQuestionById(c *fiber.Ctx) error {
 	if err != nil {
 		return result.ParamErrorResult(c, err)
 	}
-	question, err := services.GetQuestionById(id)
+	question, err := service.GetQuestionById(id)
 	if err != nil {
 		return result.HttpResult(c, nil, err)
 	}
-	dto := questionDto.QuestionDto{}
-	if err := dto.SetQuestionData(question.QuestionType, question.Data); err != nil {
+	questionDto := dto.QuestionDto{}
+	if err := questionDto.SetQuestionData(question.QuestionType, question.Data); err != nil {
 		return err
 	}
 
 	mapper.SetEnableFieldIgnoreTag(true)
-	if err = mapper.AutoMapper(question, &dto); err != nil {
+	if err = mapper.AutoMapper(question, &questionDto); err != nil {
 		return result.HttpResult(c, nil, err)
 	}
-	return result.HttpResult(c, dto, err)
+	return result.HttpResult(c, questionDto, err)
 }

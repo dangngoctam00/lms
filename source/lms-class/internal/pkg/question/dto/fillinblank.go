@@ -1,6 +1,8 @@
-package question
+package dto
 
-import "lms-class/common/xerr"
+import (
+	"lms-class/common/xerr"
+)
 
 type FillInBlankQuestion struct {
 	Data

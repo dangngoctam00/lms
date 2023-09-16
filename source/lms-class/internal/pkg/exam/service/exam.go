@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"context"
@@ -8,8 +8,10 @@ import (
 	"lms-class/common/xerr"
 	"lms-class/ent"
 	"lms-class/ent/exam"
-	"lms-class/internal/queries"
-	exam2 "lms-class/internal/web/dto/exam"
+	"lms-class/internal/pkg/exam/dto"
+	"lms-class/internal/pkg/exam/query"
+	questionService "lms-class/internal/pkg/question/service"
+	"lms-class/internal/services"
 	"lms-class/pkg/utils"
 	"log"
 	"time"
@@ -19,7 +21,7 @@ type AlreadyHavingDraft struct {
 }
 
 func init() {
-	if err := mapper.Register(&exam2.ExamDto{}); err != nil {
+	if err := mapper.Register(&dto.ExamDto{}); err != nil {
 		log.Fatal("error while registering mapper exam")
 		return
 	}
@@ -30,10 +32,10 @@ func init() {
 }
 
 func IsExamExisted(id int) (bool, error) {
-	return queries.IsExamExisted(id)
+	return query.IsExamExisted(id)
 }
 
-func CreateExam(exam *exam2.ExamDto) (*ent.Exam, error) {
+func CreateExam(exam *dto.ExamDto) (*ent.Exam, error) {
 	u, err := utils.EntClient.Exam.
 		Create().
 		SetTitle(exam.Title).
@@ -50,13 +52,13 @@ func CreateExam(exam *exam2.ExamDto) (*ent.Exam, error) {
 	return u, nil
 }
 
-func UpdateExam(id int, examDto *exam2.ExamDto) error {
+func UpdateExam(id int, examDto *dto.ExamDto) error {
 	tx, err2 := utils.EntClient.Tx(context.Background())
 	if err2 != nil {
 		log.Fatalf("failed creating transaction: %v", err2)
 	}
-	defer Commit(tx)
-	res, err := queries.GetExamForUpdate(id, tx)
+	defer services.Commit(tx)
+	res, err := query.GetExamForUpdate(id, tx)
 	if err != nil {
 		return err
 	}
@@ -102,13 +104,13 @@ func doPublishExam(id int, tx *ent.Tx) (*int, error) {
 }
 
 func PublishExam(id int) (*int, error) {
-	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
+	return services.WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
 		return doPublishExam(id, tx)
 	})
 }
 
-func GetPublishedExam(id int) (*exam2.ExamDto, error) {
-	latest, err := queries.GetPublishedExam(id)
+func GetPublishedExam(id int) (*dto.ExamDto, error) {
+	latest, err := query.GetPublishedExam(id)
 	if err != nil {
 		if _, ok := err.(*ent.NotFoundError); ok {
 			return nil, xerr.NewErrCodeAndInformation(xerr.ResourceNotFound, "exam")
@@ -118,29 +120,29 @@ func GetPublishedExam(id int) (*exam2.ExamDto, error) {
 	if latest.LastPublishedAt == nil {
 		return nil, errors.New("exam hasn't published yet")
 	}
-	examDto := &exam2.ExamDto{}
-	if examDto, err = mapExamHistory(latest); err != nil {
+	dto := &dto.ExamDto{}
+	if dto, err = mapExamHistory(latest); err != nil {
 		return nil, err
 	}
 	publishedAt := latest.LastPublishedAt
-	questionsDto, _ := GetQuestionsByExamAndPublishedTime(id, *publishedAt)
-	examDto.Questions = questionsDto
-	return examDto, nil
+	questionsDto, _ := questionService.GetQuestionsByExamAndPublishedTime(id, *publishedAt)
+	dto.Questions = questionsDto
+	return dto, nil
 }
 
-func mapExamHistory(res *ent.ExamHistory) (*exam2.ExamDto, error) {
-	examDto := &exam2.ExamDto{}
+func mapExamHistory(res *ent.ExamHistory) (*dto.ExamDto, error) {
+	dto := &dto.ExamDto{}
 	mapper.SetEnableFieldIgnoreTag(true)
-	err := mapper.AutoMapper(res, examDto)
-	examDto.Id = res.Ref
+	err := mapper.AutoMapper(res, dto)
+	dto.Id = res.Ref
 	if err != nil {
 		log.Print("unexpected error while mapping")
 		return nil, err
 	}
-	return examDto, nil
+	return dto, nil
 }
 
-func GetExam(id int) (*exam2.ExamDto, error) {
+func GetExam(id int) (*dto.ExamDto, error) {
 	res, err := utils.EntClient.Exam.Query().Where(exam.IDEQ(id)).Only(context.Background())
 	if err != nil {
 		if _, ok := err.(*ent.NotFoundError); ok {
@@ -148,21 +150,21 @@ func GetExam(id int) (*exam2.ExamDto, error) {
 		}
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 	}
-	examDto := &exam2.ExamDto{}
+	dto := &dto.ExamDto{}
 	mapper.SetEnableFieldIgnoreTag(true)
-	if err = mapper.AutoMapper(res, examDto); err != nil {
+	if err = mapper.AutoMapper(res, dto); err != nil {
 		return nil, err
 	}
 	if res.HavingDraft == false {
 		publishedAt := res.LastPublishedAt
-		questionsDto, _ := GetQuestionsByExamAndPublishedTime(id, *publishedAt)
-		examDto.Questions = questionsDto
+		questionsDto, _ := questionService.GetQuestionsByExamAndPublishedTime(id, *publishedAt)
+		dto.Questions = questionsDto
 	} else {
-		questionsDto, err := GetQuestionsByExam(id)
+		questionsDto, err := questionService.GetQuestionsByExam(id)
 		if err != nil {
 			return nil, err
 		}
-		examDto.Questions = questionsDto
+		dto.Questions = questionsDto
 	}
-	return examDto, nil
+	return dto, nil
 }

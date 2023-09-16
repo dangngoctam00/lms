@@ -50,6 +50,8 @@ type Quiz struct {
 	ViewPreviousSessions bool `json:"viewPreviousSessions,omitempty"`
 	// ViewPreviousSessionsTime holds the value of the "viewPreviousSessionsTime" field.
 	ViewPreviousSessionsTime *time.Time `json:"viewPreviousSessionsTime,omitempty"`
+	// ViewResult holds the value of the "viewResult" field.
+	ViewResult bool `json:"viewResult,omitempty"`
 	// PassedScore holds the value of the "passedScore" field.
 	PassedScore *int `json:"passedScore,omitempty"`
 	// FinalGradedStrategy holds the value of the "finalGradedStrategy" field.
@@ -98,7 +100,7 @@ func (*Quiz) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case quiz.FieldIsPublished, quiz.FieldViewPreviousSessions:
+		case quiz.FieldIsPublished, quiz.FieldViewPreviousSessions, quiz.FieldViewResult:
 			values[i] = new(sql.NullBool)
 		case quiz.FieldID, quiz.FieldExamId, quiz.FieldContextId, quiz.FieldParentId, quiz.FieldTimeLimit, quiz.FieldMaxAttempt, quiz.FieldPassedScore:
 			values[i] = new(sql.NullInt64)
@@ -230,6 +232,12 @@ func (q *Quiz) assignValues(columns []string, values []any) error {
 				q.ViewPreviousSessionsTime = new(time.Time)
 				*q.ViewPreviousSessionsTime = value.Time
 			}
+		case quiz.FieldViewResult:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field viewResult", values[i])
+			} else if value.Valid {
+				q.ViewResult = value.Bool
+			}
 		case quiz.FieldPassedScore:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field passedScore", values[i])
@@ -351,6 +359,9 @@ func (q *Quiz) String() string {
 		builder.WriteString("viewPreviousSessionsTime=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("viewResult=")
+	builder.WriteString(fmt.Sprintf("%v", q.ViewResult))
 	builder.WriteString(", ")
 	if v := q.PassedScore; v != nil {
 		builder.WriteString("passedScore=")

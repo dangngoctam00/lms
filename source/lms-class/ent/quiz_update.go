@@ -252,6 +252,12 @@ func (qu *QuizUpdate) ClearViewPreviousSessionsTime() *QuizUpdate {
 	return qu
 }
 
+// SetViewResult sets the "viewResult" field.
+func (qu *QuizUpdate) SetViewResult(b bool) *QuizUpdate {
+	qu.mutation.SetViewResult(b)
+	return qu
+}
+
 // SetPassedScore sets the "passedScore" field.
 func (qu *QuizUpdate) SetPassedScore(i int) *QuizUpdate {
 	qu.mutation.ResetPassedScore()
@@ -475,6 +481,9 @@ func (qu *QuizUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if qu.mutation.ViewPreviousSessionsTimeCleared() {
 		_spec.ClearField(quiz.FieldViewPreviousSessionsTime, field.TypeTime)
+	}
+	if value, ok := qu.mutation.ViewResult(); ok {
+		_spec.SetField(quiz.FieldViewResult, field.TypeBool, value)
 	}
 	if value, ok := qu.mutation.PassedScore(); ok {
 		_spec.SetField(quiz.FieldPassedScore, field.TypeInt, value)
@@ -807,6 +816,12 @@ func (quo *QuizUpdateOne) ClearViewPreviousSessionsTime() *QuizUpdateOne {
 	return quo
 }
 
+// SetViewResult sets the "viewResult" field.
+func (quo *QuizUpdateOne) SetViewResult(b bool) *QuizUpdateOne {
+	quo.mutation.SetViewResult(b)
+	return quo
+}
+
 // SetPassedScore sets the "passedScore" field.
 func (quo *QuizUpdateOne) SetPassedScore(i int) *QuizUpdateOne {
 	quo.mutation.ResetPassedScore()
@@ -1060,6 +1075,9 @@ func (quo *QuizUpdateOne) sqlSave(ctx context.Context) (_node *Quiz, err error) 
 	}
 	if quo.mutation.ViewPreviousSessionsTimeCleared() {
 		_spec.ClearField(quiz.FieldViewPreviousSessionsTime, field.TypeTime)
+	}
+	if value, ok := quo.mutation.ViewResult(); ok {
+		_spec.SetField(quiz.FieldViewResult, field.TypeBool, value)
 	}
 	if value, ok := quo.mutation.PassedScore(); ok {
 		_spec.SetField(quiz.FieldPassedScore, field.TypeInt, value)

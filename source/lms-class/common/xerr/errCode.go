@@ -13,6 +13,7 @@ const ResourceNotFound uint32 = 100007
 // --
 const QuizNotConfigured uint32 = 200001
 const QuizSessionClosed uint32 = 200002
+const QuizSessionIsNotAllowedView uint32 = 200003
 
 // --
 const QuestionDataNotCorrect = 300001

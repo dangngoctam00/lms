@@ -1,4 +1,4 @@
-package queries
+package query
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"lms-class/ent"
 	entQuestion "lms-class/ent/question"
 	"lms-class/ent/questionhistory"
-	"lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
 	"lms-class/pkg"
 	"lms-class/pkg/utils"
 	"time"
@@ -28,7 +28,6 @@ func GetQuestionsByExamAndPublishedTime(examId int, lastPublished time.Time) ([]
 			t.Schema(pkg.GetTenant())
 			subQuery := sql.Select(sql.Max(t.C(questionhistory.FieldHistoryTime))).
 				From(t).Where(sql.EQ(t.C(questionhistory.FieldRef), sql.Expr(s.C(questionhistory.FieldRef))))
-			//subQuery.Table().Schema(pkg.GetTenant())
 			subQuery.Where(sql.EQ(t.C(questionhistory.FieldContextId), examId))
 			subQuery.Where(sql.EQ(t.C(questionhistory.FieldContext), "EXAM"))
 			subQuery.Where(sql.LTE(t.C(questionhistory.FieldHistoryTime), lastPublished))
@@ -41,7 +40,14 @@ func GetQuestionsByExamAndPublishedTime(examId int, lastPublished time.Time) ([]
 func GetQuestionsByExam(examId int) ([]*ent.Question, error) {
 	return utils.EntClient.Question.
 		Query().
-		Where(entQuestion.ContextEQ(question.Exam),
+		Where(entQuestion.ContextEQ(dto.Exam),
 			entQuestion.ContextIdEQ(examId)).
 		All(context.Background())
+}
+
+func ExistsById(id int) (bool, error) {
+	return utils.EntClient.Question.
+		Query().
+		Where(entQuestion.ID(id)).
+		Exist(context.Background())
 }

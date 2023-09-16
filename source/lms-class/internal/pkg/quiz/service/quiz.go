@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"context"
@@ -6,23 +6,51 @@ import (
 	"github.com/pkg/errors"
 	"lms-class/common/xerr"
 	"lms-class/ent"
-	"lms-class/internal/queries"
-	"lms-class/internal/web/dto/exam"
-	"lms-class/internal/web/dto/question"
-	"lms-class/internal/web/dto/quiz"
+	"lms-class/ent/quiz"
+	"lms-class/internal/pkg/exam/dto"
+	examService "lms-class/internal/pkg/exam/service"
+	questionController "lms-class/internal/pkg/question/dto"
+	quizController "lms-class/internal/pkg/quiz/dto"
+	"lms-class/internal/pkg/quiz/query"
+	"lms-class/internal/services"
 	"lms-class/pkg/utils"
+	"log"
 	"math/rand"
 	"time"
 )
 
-func CreateQuiz(quizDto *quiz.QuizDto) (*int, error) {
-	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
+func SubmitQuizSession() {
+	<-utils.DbCh
+	// case user don't open frontend tab
+	ticker := time.Tick(10 * time.Second)
+	for {
+		select {
+		case <-ticker:
+			sessions, err := query.GetUnSubmittedQuizSessions()
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			log.Println("Number of un-submitted sessions: ", len(sessions))
+		}
+	}
+}
+
+func init() {
+	go SubmitQuizSession()
+}
+
+func CreateQuiz(quizDto *quizController.QuizDto) (*int, error) {
+	return services.WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
 		return doCreateQuiz(quizDto, tx)
 	})
 }
 
 func GetQuizById(id int) (*ent.Quiz, error) {
-	byId, err := queries.GetQuizById(id)
+	byId, err := utils.EntClient.Quiz.
+		Query().
+		Where(quiz.ID(id)).
+		Only(context.Background())
 	if err != nil {
 		if _, ok := err.(*ent.NotFoundError); ok {
 			return nil, xerr.NewErrCodeAndInformation(xerr.ResourceNotFound, "quiz")
@@ -32,47 +60,64 @@ func GetQuizById(id int) (*ent.Quiz, error) {
 	return byId, err
 }
 
-func GetQuizSession(id int) (*quiz.QuizSession, error) {
-	byId, err := queries.GetQuizSubmissionById(id)
+func GetQuizSession(id int) (*quizController.QuizSession, error) {
+	submission, err := query.GetQuizSubmissionById(id)
 	if err != nil {
 		if _, ok := err.(*ent.NotFoundError); ok {
 			return nil, xerr.NewErrCodeAndInformation(xerr.ResourceNotFound, "quiz submission")
 		}
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 	}
-	response := new(quiz.QuizSession)
-	response.ID = byId.ID
-	var questions []question.QuestionQuizSession
-	if err = json.Unmarshal(byId.Questions, &questions); err != nil {
+	quizId := submission.QuizId
+	quizEntity, err := GetQuizById(quizId)
+	if err != nil {
+		return nil, err
+	}
+	if (quizEntity.ViewPreviousSessions != false && submission.SubmittedAt != nil) ||
+		(quizEntity.ViewPreviousSessions && quizEntity.ViewPreviousSessionsTime != nil && quizEntity.ViewPreviousSessionsTime.After(time.Now())) {
+		return nil, xerr.NewErrCode(xerr.QuizSessionIsNotAllowedView)
+	}
+
+	response := new(quizController.QuizSession)
+	response.ID = submission.ID
+	var questions []questionController.QuestionQuizSession
+	if err = json.Unmarshal(submission.Questions, &questions); err != nil {
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 	}
 	for i, q := range questions {
 		questions[i].ID = q.ID
 		questions[i].QuestionType = q.QuestionType
 		questions[i].Position = q.Position
-		questions[i].SetData(q.QuestionType, q.Data)
-		questions[i].Answers = byId.Answers[q.ID]
+		err := questions[i].SetData(q.QuestionType, q.Data)
+		if err != nil {
+			return nil, err
+		}
+		questions[i].Answers = submission.Answers[q.ID]
+	}
+	if quizEntity.ViewResult == true && submission.SubmittedAt != nil {
+		// TODO: fill result after graded
+		return nil, nil
 	}
 	response.Questions = questions
 	return response, nil
 }
 
-func AnswerQuestionById(sessionId, questionId int, answer []question.Key) (*int, error) {
-	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
-		session, err := queries.GetQuizSubmissionByIdOnUpdate(tx, sessionId)
+func AnswerQuestionById(sessionId, questionId int, answer []questionController.Key) (*int, error) {
+	return services.WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
+		session, err := query.GetQuizSubmissionByIdOnUpdate(tx, sessionId)
 		if err != nil {
 			if _, ok := err.(*ent.NotFoundError); ok {
 				return nil, xerr.NewErrCodeAndInformation(xerr.ResourceNotFound, "quiz submission")
 			}
 			return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 		}
-		quiz := session.Edges.Quiz
-		if session.StartedAt.Add(time.Duration(*quiz.TimeLimit * int(time.Minute))).Before(time.Now()) {
+		quizEntity := session.Edges.Quiz
+		if session.StartedAt.Add(time.Duration(*quizEntity.TimeLimit * int(time.Minute))).Before(time.Now()) {
 			return nil, xerr.NewErrCodeAndInformation(xerr.QuizSessionClosed)
 		}
 		answers := session.Answers
 		if answers == nil {
-			answers = make(map[int][]question.Key)
+			answers = make(map[int][]questionController.Key)
 		}
 		answers[questionId] = answer
 		_, err = session.Update().
@@ -94,19 +139,19 @@ func DoQuiz(id int) (*int, error) {
 		return nil, xerr.NewErrCodeAndInformation(xerr.QuizNotConfigured)
 	}
 	examId := quizEntity.ExamId
-	exam, err := GetPublishedExam(*examId)
+	examEntity, err := examService.GetPublishedExam(*examId)
 	if err != nil {
 		return nil, err
 	}
-	questionsInSession := shuffleQuestions(exam)
+	questionsInSession := shuffleQuestions(examEntity)
 	marshal, err := json.Marshal(questionsInSession)
-	return WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
+	return services.WithTx(context.Background(), utils.EntClient, func(tx *ent.Tx) (*int, error) {
 		save, err := tx.Client().QuizSubmission.Create().
 			SetQuizId(id).
 			SetUserId(1).
 			SetStartedAt(time.Now()).
 			SetQuestions(marshal).
-			SetSubmittedAt(time.Now()).
+			//SetSubmittedAt(time.Now()).
 			Save(context.Background())
 		return &save.ID, err
 	})
@@ -119,7 +164,7 @@ func validateDoQuiz(quiz *ent.Quiz) bool {
 		quiz.TimeLimit != nil
 }
 
-func shuffleQuestions(exam *exam.ExamDto) []question.QuestionQuizSession {
+func shuffleQuestions(exam *dto.ExamDto) []questionController.QuestionQuizSession {
 	questions := exam.Questions
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	r.Shuffle(len(questions), func(i, j int) {
@@ -129,20 +174,20 @@ func shuffleQuestions(exam *exam.ExamDto) []question.QuestionQuizSession {
 		questions[i].Position = i
 	}
 	for i := range questions {
-		if q, ok := questions[i].Data.(question.IQuestion); ok {
+		if q, ok := questions[i].Data.(questionController.IQuestion); ok {
 			q.Shuffle()
 		}
 	}
-	questionsInSession := make([]question.QuestionQuizSession, len(questions))
+	questionsInSession := make([]questionController.QuestionQuizSession, len(questions))
 	for i, q := range questions {
-		questionsInSession[i] = *question.NewQuestionQuizSession(q)
+		questionsInSession[i] = *questionController.NewQuestionQuizSession(q)
 	}
 	return questionsInSession
 }
 
-func doCreateQuiz(quizDto *quiz.QuizDto, tx *ent.Tx) (*int, error) {
+func doCreateQuiz(quizDto *quizController.QuizDto, tx *ent.Tx) (*int, error) {
 	if quizDto.ExamId != nil {
-		existed, err := IsExamExisted(*quizDto.ExamId)
+		existed, err := examService.IsExamExisted(*quizDto.ExamId)
 		if err != nil {
 			return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)
 		}
@@ -170,6 +215,7 @@ func doCreateQuiz(quizDto *quiz.QuizDto, tx *ent.Tx) (*int, error) {
 		SetNillableViewPreviousSessionsTime(quizDto.ViewPreviousSessionsTime).
 		SetNillablePassedScore(quizDto.PassedScore).
 		SetNillableFinalGradedStrategy(quizDto.FinalGradedStrategy).
+		SetViewResult(quizDto.ViewResult).
 		Save(context.Background())
 	if err != nil {
 		return nil, errors.Wrapf(xerr.NewErrCodeAndInformation(xerr.ServerCommonError), "err:%+v", err)

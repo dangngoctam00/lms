@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
-	"lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
 	"strings"
 	"time"
 
@@ -31,7 +31,7 @@ type QuizSubmission struct {
 	// Questions holds the value of the "questions" field.
 	Questions json.RawMessage `json:"questions,omitempty"`
 	// Answers holds the value of the "answers" field.
-	Answers map[int][]question.Key `json:"answers,omitempty"`
+	Answers map[int][]dto.Key `json:"answers,omitempty"`
 	// Score holds the value of the "score" field.
 	Score *int `json:"score,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.

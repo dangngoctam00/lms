@@ -10,7 +10,7 @@ import (
 	"lms-class/ent/predicate"
 	"lms-class/ent/quiz"
 	"lms-class/ent/quizsubmission"
-	"lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -90,7 +90,7 @@ func (qsu *QuizSubmissionUpdate) AppendQuestions(jm json.RawMessage) *QuizSubmis
 }
 
 // SetAnswers sets the "answers" field.
-func (qsu *QuizSubmissionUpdate) SetAnswers(m map[int][]question.Key) *QuizSubmissionUpdate {
+func (qsu *QuizSubmissionUpdate) SetAnswers(m map[int][]dto.Key) *QuizSubmissionUpdate {
 	qsu.mutation.SetAnswers(m)
 	return qsu
 }
@@ -342,7 +342,7 @@ func (qsuo *QuizSubmissionUpdateOne) AppendQuestions(jm json.RawMessage) *QuizSu
 }
 
 // SetAnswers sets the "answers" field.
-func (qsuo *QuizSubmissionUpdateOne) SetAnswers(m map[int][]question.Key) *QuizSubmissionUpdateOne {
+func (qsuo *QuizSubmissionUpdateOne) SetAnswers(m map[int][]dto.Key) *QuizSubmissionUpdateOne {
 	qsuo.mutation.SetAnswers(m)
 	return qsuo
 }

@@ -8,7 +8,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/flume/enthistory"
-	"lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
 )
 
 // QuizSubmission holds the schema definition for the QuizSubmission entity.
@@ -24,7 +24,7 @@ func (QuizSubmission) Fields() []ent.Field {
 		field.Time("startedAt"),
 		field.Time("submittedAt").Optional().Nillable(),
 		field.JSON("questions", json.RawMessage{}),
-		field.JSON("answers", map[int][]question.Key{}).Optional(),
+		field.JSON("answers", map[int][]dto.Key{}).Optional(),
 		field.Int("score").Optional().Nillable(),
 	}
 }

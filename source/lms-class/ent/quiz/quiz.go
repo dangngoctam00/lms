@@ -44,6 +44,8 @@ const (
 	FieldViewPreviousSessions = "view_previous_sessions"
 	// FieldViewPreviousSessionsTime holds the string denoting the viewprevioussessionstime field in the database.
 	FieldViewPreviousSessionsTime = "view_previous_sessions_time"
+	// FieldViewResult holds the string denoting the viewresult field in the database.
+	FieldViewResult = "view_result"
 	// FieldPassedScore holds the string denoting the passedscore field in the database.
 	FieldPassedScore = "passed_score"
 	// FieldFinalGradedStrategy holds the string denoting the finalgradedstrategy field in the database.
@@ -89,6 +91,7 @@ var Columns = []string{
 	FieldMaxAttempt,
 	FieldViewPreviousSessions,
 	FieldViewPreviousSessionsTime,
+	FieldViewResult,
 	FieldPassedScore,
 	FieldFinalGradedStrategy,
 }
@@ -189,6 +192,11 @@ func ByViewPreviousSessions(opts ...sql.OrderTermOption) OrderOption {
 // ByViewPreviousSessionsTime orders the results by the viewPreviousSessionsTime field.
 func ByViewPreviousSessionsTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldViewPreviousSessionsTime, opts...).ToFunc()
+}
+
+// ByViewResult orders the results by the viewResult field.
+func ByViewResult(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldViewResult, opts...).ToFunc()
 }
 
 // ByPassedScore orders the results by the passedScore field.

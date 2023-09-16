@@ -1,4 +1,4 @@
-package question
+package dto
 
 import (
 	"lms-class/common/xerr"

@@ -135,6 +135,11 @@ func ViewPreviousSessionsTime(v time.Time) predicate.Quiz {
 	return predicate.Quiz(sql.FieldEQ(FieldViewPreviousSessionsTime, v))
 }
 
+// ViewResult applies equality check predicate on the "viewResult" field. It's identical to ViewResultEQ.
+func ViewResult(v bool) predicate.Quiz {
+	return predicate.Quiz(sql.FieldEQ(FieldViewResult, v))
+}
+
 // PassedScore applies equality check predicate on the "passedScore" field. It's identical to PassedScoreEQ.
 func PassedScore(v int) predicate.Quiz {
 	return predicate.Quiz(sql.FieldEQ(FieldPassedScore, v))
@@ -873,6 +878,16 @@ func ViewPreviousSessionsTimeIsNil() predicate.Quiz {
 // ViewPreviousSessionsTimeNotNil applies the NotNil predicate on the "viewPreviousSessionsTime" field.
 func ViewPreviousSessionsTimeNotNil() predicate.Quiz {
 	return predicate.Quiz(sql.FieldNotNull(FieldViewPreviousSessionsTime))
+}
+
+// ViewResultEQ applies the EQ predicate on the "viewResult" field.
+func ViewResultEQ(v bool) predicate.Quiz {
+	return predicate.Quiz(sql.FieldEQ(FieldViewResult, v))
+}
+
+// ViewResultNEQ applies the NEQ predicate on the "viewResult" field.
+func ViewResultNEQ(v bool) predicate.Quiz {
+	return predicate.Quiz(sql.FieldNEQ(FieldViewResult, v))
 }
 
 // PassedScoreEQ applies the EQ predicate on the "passedScore" field.

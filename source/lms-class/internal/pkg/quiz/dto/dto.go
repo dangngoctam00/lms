@@ -1,7 +1,7 @@
-package quiz
+package dto
 
 import (
-	"lms-class/internal/web/dto/question"
+	"lms-class/internal/pkg/question/dto"
 	"time"
 )
 
@@ -25,14 +25,15 @@ type QuizDto struct {
 	ViewPreviousSessionsTime *time.Time `json:"viewPreviousSessionsTime,omitempty"`
 	PassedScore              *int       `json:"passedScore,omitempty"`
 	FinalGradedStrategy      *string    `json:"finalGradedStrategy,omitempty"`
+	ViewResult               bool       `json:"viewResult,omitempty"`
 }
 
 type QuizSession struct {
-	ID        int                            `json:"id,omitempty"`
-	HasGraded bool                           `json:"hasGraded,omitempty"`
-	HasActive bool                           `json:"hasActive,omitempty"`
-	Score     int                            `json:"score,omitempty"`
-	Questions []question.QuestionQuizSession `json:"questions"`
+	ID        int                       `json:"id,omitempty"`
+	HasGraded bool                      `json:"hasGraded,omitempty"`
+	HasActive bool                      `json:"hasActive,omitempty"`
+	Score     int                       `json:"score,omitempty"`
+	Questions []dto.QuestionQuizSession `json:"questions"`
 }
 
 func (q *QuizDto) WithId(id *int) {
